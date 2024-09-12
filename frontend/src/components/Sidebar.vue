@@ -2,8 +2,8 @@
   <div class="flex">
     <!-- Sidebar -->
     <div :class="['h-screen bg-gray-800 text-white transition-all duration-300', { 'w-72': isOpen, 'w-20': !isOpen }]">
-      <div class="p-6 text-xl font-semibold">
-        <!-- Toggle button -->
+
+      <!-- <div class="p-6 text-xl font-semibold">
         <button 
           @click="toggleSidebar"
           class="text-white bg-gray-700 hover:bg-gray-600 rounded-lg px-2 py-1"
@@ -11,7 +11,8 @@
           <i :class="isOpen ? 'fas fa-chevron-left' : 'fas fa-chevron-right'"></i>
         </button>
         <span v-if="isOpen" class="ml-3">Menu</span>
-      </div>
+      </div> -->
+      <div class="p-6 text-xl font-semibold">CPC Online Clearance</div>
 
       <ul v-if="userRole === 'admin'">
         <!-- Admin-specific menu items -->
@@ -111,9 +112,9 @@ const router = useRouter();
 const route = useRoute();
 
 // Toggle Sidebar visibility
-const toggleSidebar = () => {
-  isOpen.value = !isOpen.value;
-};
+// const toggleSidebar = () => {
+//   isOpen.value = !isOpen.value;
+// };
 
 // Navigation function with active item setting
 const navigateTo = (item) => {
