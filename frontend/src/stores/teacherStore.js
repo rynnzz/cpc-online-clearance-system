@@ -11,7 +11,6 @@ export const useTeacherStore = defineStore('teacherStore', {
       this.isLoading = true;
       try {
         const response = await teacherService.getAllTeachers(); // Ensure this method aligns with the backend service
-        console.log('Teachers fetched:', response.data); // Debugging line to log fetched data
         this.teachers = response.data;
       } catch (error) {
         console.error("Failed to fetch teachers:", error);
@@ -22,12 +21,12 @@ export const useTeacherStore = defineStore('teacherStore', {
 
     async addTeacher(teacher) {
       try {
-        const response = await teacherService.addTeacher(teacher);
-        this.teachers.push(response.data); // Add the new teacher to the list
+        await teacherService.addTeacher(teacher);
+        await this.fetchTeachers(); // Fetch the updated list of teachers
       } catch (error) {
         console.error("Failed to add teacher:", error);
       }
-    },
+    },    
 
     async updateTeacher(teacher) {
       try {

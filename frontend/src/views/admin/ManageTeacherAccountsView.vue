@@ -13,7 +13,7 @@
           <h1 class="text-4xl font-bold">Manage Teacher Accounts</h1>
           <!-- Button to trigger Add Teacher Modal -->
           <button @click="openAddModal" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition">
-            Add Teacher
+            Add New
           </button>
         </div>
 
@@ -136,7 +136,7 @@
 <script setup>
 import Header from '@/components/Header.vue'
 import Sidebar from '@/components/Sidebar.vue'
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { useTeacherStore } from '@/stores/teacherStore'
 
 const teacherStore = useTeacherStore()
@@ -199,7 +199,7 @@ const cancelEdit = () => {
   isEditing.value = false
 }
 
-const teachers = teacherStore.teachers
+const teachers = computed(() => teacherStore.teachers);
 </script>
 
 <style scoped>
