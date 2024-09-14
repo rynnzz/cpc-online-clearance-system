@@ -72,21 +72,7 @@ const handleLogin = async () => {
 
     // Check the role from the store
     const { userRole } = authStore;
-
-    // Redirect based on the role
-    switch (userRole) {
-      case 'admin':
-        router.push('/admin-dashboard');
-        break;
-      case 'teacher':
-        router.push('/teacher-dashboard');
-        break;
-      case 'student':
-        router.push('/student-dashboard');
-        break;
-      default:
-        alert('Unknown role');
-    }
+    router.push('/dashboard')
   } catch (error) {
     console.error('Login failed:', error.message);
     alert('Invalid credentials');

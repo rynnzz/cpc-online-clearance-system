@@ -6,7 +6,7 @@ const saltRounds = 10;
 exports.getAllTeachers = () => {
     // Query to join users and teacher_details tables and fetch all teacher details
     return db.execute(`
-        SELECT u.id, u.role, td.name, td.email, td.subject
+        SELECT u.id, u.role, u.first_name, u.middle_name, u.last_name, u.email, td.yr_and_section, td.subjects, td.teacher_type
         FROM users u
         JOIN teacher_details td ON u.id = td.user_id
         WHERE u.role = 'teacher'
@@ -16,7 +16,7 @@ exports.getAllTeachers = () => {
 // Find teacher by ID with user information
 exports.findById = (id) => {
     return db.execute(`
-        SELECT u.id, u.role, td.name, td.email, td.subject
+        SELECT u.id, u.role, u.first_name, u.middle_name, u.last_name, u.email, td.yr_and_section, td.subjects, td.teacher_type
         FROM users u
         JOIN teacher_details td ON u.id = td.user_id
         WHERE u.id = ?
@@ -24,13 +24,8 @@ exports.findById = (id) => {
 };
 
 // Add a new teacher
-exports.add = async (teacher) => {
-    const { email, password, name, subject } = teacher;
-
-    // Validate input
-    if (typeof email !== 'string' || typeof password !== 'string' || typeof name !== 'string' || typeof subject !== 'string') {
-        throw new Error('Invalid input data');
-    }
+exports.addTeacher = async (teacher) => {
+    const { first_name, middle_name, last_name, email, password, yr_and_section, subjects, teacher_type } = teacher;
 
     try {
         // Hash the password
@@ -38,17 +33,17 @@ exports.add = async (teacher) => {
 
         // Insert new user into the users table
         const [userResult] = await db.execute(`
-            INSERT INTO users (email, password, role)
-            VALUES (?, ?, 'teacher')
-        `, [email, hashedPassword]);
+            INSERT INTO users (first_name, middle_name, last_name, email, password, role)
+            VALUES (?, ?, ?, ?, ?, 'teacher')
+        `, [first_name, middle_name, last_name, email, hashedPassword]);
 
         const userId = userResult.insertId;
 
         // Insert teacher details into the teacher_details table
         await db.execute(`
-            INSERT INTO teacher_details (user_id, name, email, subject)
+            INSERT INTO teacher_details (user_id, yr_and_section, subjects, teacher_type)
             VALUES (?, ?, ?, ?)
-        `, [userId, name, email, subject]);
+        `, [userId, yr_and_section, subjects, teacher_type]);
 
         return { message: 'Teacher account added successfully' };
     } catch (err) {
@@ -58,14 +53,37 @@ exports.add = async (teacher) => {
 };
 
 // Update a teacher by ID
-exports.updateTeacher = (id, teacher) => {
-    const { name, email, subject } = teacher;
-    return db.execute(`
-        UPDATE teacher_details 
-        SET name = ?, email = ?, subject = ? 
-        WHERE user_id = ?
-    `, [name, email, subject, id]);
+exports.updateTeacher = async (id, teacher) => {
+    const { first_name, middle_name, last_name, email, password, yr_and_section, subjects, teacher_type } = teacher;
+
+    try {
+        // Hash the password (if provided)
+        let hashedPassword;
+        if (password) {
+            hashedPassword = await bcrypt.hash(password, saltRounds);
+        }
+
+        // Update the users table
+        await db.execute(`
+            UPDATE users
+            SET first_name = ?, middle_name = ?, last_name = ?, email = ?, password = ?
+            WHERE id = ? AND role = 'teacher'
+        `, [first_name, middle_name, last_name, email, hashedPassword || password, id]);
+
+        // Update the teacher_details table
+        await db.execute(`
+            UPDATE teacher_details
+            SET yr_and_section = ?, subjects = ?, teacher_type = ?
+            WHERE user_id = ?
+        `, [yr_and_section, subjects, teacher_type, id]);
+
+        return { message: 'Teacher account updated successfully' };
+    } catch (err) {
+        console.error(`Error updating teacher account: ${err.message}`);
+        throw new Error(`Error updating teacher account: ${err.message}`);
+    }
 };
+
 
 // Delete a teacher by ID
 exports.deleteTeacher = (id) => {

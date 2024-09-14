@@ -17,8 +17,8 @@
       <ul v-if="userRole === 'admin'">
         <!-- Admin-specific menu items -->
         <li 
-          :class="['flex items-center px-6 py-3 hover:bg-gray-700 cursor-pointer text-lg', { 'bg-gray-600': activeItem === 'admin-dashboard' }]"
-          @click="navigateTo('admin-dashboard')"
+          :class="['flex items-center px-6 py-3 hover:bg-gray-700 cursor-pointer text-lg', { 'bg-gray-600': activeItem === 'dashboard' }]"
+          @click="navigateTo('dashboard')"
         >
           <i class="fas fa-tachometer-alt mr-3"></i> 
           <span v-if="isOpen">Dashboard</span>
@@ -41,7 +41,7 @@
         </li>
 
         <!-- Separator -->
-        <hr class="my-4 border-gray-600" />
+        <hr class="my-4 border-gray-600 m-3" />
 
         <!-- Manage Accounts Dropdown -->
         <li class="relative">
@@ -78,7 +78,7 @@
       <ul v-if="userRole === 'teacher'">
         <!-- Teacher-specific menu items -->
         <li 
-          :class="['flex items-center px-6 py-3 hover:bg-gray-700 cursor-pointer text-lg', { 'bg-gray-600': activeItem === 'admin-dashboard' }]"
+          :class="['flex items-center px-6 py-3 hover:bg-gray-700 cursor-pointer text-lg', { 'bg-gray-600': activeItem === 'dashboard' }]"
           @click="navigateTo('teacher-dashboard')"
         >
           <i class="fas fa-tachometer-alt mr-3"></i> 
@@ -122,7 +122,7 @@ const navigateTo = (item) => {
   dropdownOpen.value = (item === 'teacher-accounts' || item === 'student-accounts'); // Keep dropdown open for sub-items
 
   const routes = {
-    'admin-dashboard': '/admin-dashboard',
+    'dashboard': '/dashboard',
     'approve-requests': '/approve-requests',
     'students-status': '/students-status',
     'teacher-accounts': '/manage-teacher-accounts',
@@ -144,7 +144,7 @@ watch(
   () => route.path,
   (newPath) => {
     const pathToActiveItem = {
-      '/admin-dashboard': 'admin-dashboard',
+      '/dashboard': 'dashboard',
       '/approve-requests': 'approve-requests',
       '/students-status': 'students-status',
       '/manage-teacher-accounts': 'teacher-accounts',
@@ -154,14 +154,14 @@ watch(
     };
 
     // Set the active item based on the current route path
-    activeItem.value = pathToActiveItem[newPath] || 'admin-dashboard';
+    activeItem.value = pathToActiveItem[newPath] || 'dashboard';
   }
 );
 
 // Initialize activeItem based on the current route on component mount
 onMounted(() => {
   const pathToActiveItem = {
-    '/admin-dashboard': 'admin-dashboard',
+    '/dashboard': 'dashboard',
     '/approve-requests': 'approve-requests',
     '/students-status': 'students-status',
     '/manage-teacher-accounts': 'teacher-accounts',
@@ -169,7 +169,7 @@ onMounted(() => {
     '/teacher-dashboard': 'teacher-dashboard',
     '/approve-clearance': 'approve-clearance',
   };
-  activeItem.value = pathToActiveItem[route.path] || 'admin-dashboard';
+  activeItem.value = pathToActiveItem[route.path] || 'dashboard';
   authStore.initializeStore();
 });
 </script>

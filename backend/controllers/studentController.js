@@ -17,7 +17,7 @@ exports.getAllStudents = async (req, res) => {
 exports.addStudent = async (req, res) => {
     const newStudent = req.body;
     try {
-        await studentModel.add(newStudent);
+        await studentModel.addStudent(newStudent);
         res.json({ message: 'student added successfully' });
     } catch (err) {
         res.status(500).json({ error: err.message });

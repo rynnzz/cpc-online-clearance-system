@@ -17,7 +17,7 @@ exports.getAllTeachers = async (req, res) => {
 exports.addTeacher = async (req, res) => {
     const newTeacher = req.body;
     try {
-        await teacherModel.add(newTeacher);
+        await teacherModel.addTeacher(newTeacher);
         res.json({ message: 'Teacher added successfully' });
     } catch (err) {
         res.status(500).json({ error: err.message });

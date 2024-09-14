@@ -6,7 +6,7 @@ const saltRounds = 10;
 exports.getAllStudents = () => {
     // Query to join users and student_details tables and fetch all student details
     return db.execute(`
-        SELECT u.id, u.email, u.role,  sd.first_name, sd.middle_name, sd.last_name, sd.degree, sd.yr_and_section
+        SELECT u.id, u.role, u.first_name, u.middle_name, u.last_name, u.email, sd.degree, sd.yr_and_section, sd.student_type
         FROM users u
         JOIN student_details sd ON u.id = sd.user_id
         WHERE u.role = 'student'
@@ -16,7 +16,7 @@ exports.getAllStudents = () => {
 // Find student by ID with user information
 exports.findById = (id) => {
     return db.execute(`
-        SELECT u.id, u.role, sd.first_name, sd.middle_name, sd.last_name, sd.degree, sd.yr_and_section
+        SELECT u.id, u.role, u.first_name, u.middle_name, u.last_name, u.email, sd.degree, sd.yr_and_section, sd.student_type
         FROM users u
         JOIN student_details sd ON u.id = sd.user_id
         WHERE u.id = ?
@@ -24,8 +24,8 @@ exports.findById = (id) => {
 };
 
 // Add a new student
-exports.add = async (student) => {
-    const { first_name, middle_name, last_name, email, password, degree, yr_and_section } = student;
+exports.addStudent = async (student) => {
+    const { first_name, middle_name, last_name, email, password, degree, yr_and_section, student_type } = student;
 
     try {
         // Hash the password
@@ -33,17 +33,17 @@ exports.add = async (student) => {
 
         // Insert new user into the users table
         const [userResult] = await db.execute(`
-            INSERT INTO users (email, password, role)
-            VALUES (?, ?, 'student')
-        `, [email, hashedPassword]);
+            INSERT INTO users (first_name, middle_name, last_name, email, password , role)
+            VALUES (?, ?, ?, ?, ?, 'student')
+        `, [first_name, middle_name, last_name, email, hashedPassword]);
 
         const userId = userResult.insertId;
 
         // Insert student details into the student_details table
         await db.execute(`
-            INSERT INTO student_details (user_id, first_name, middle_name, last_name, degree, yr_and_section)
-            VALUES (?, ?, ?, ?, ?, ?)
-        `, [userId, first_name, middle_name, last_name, degree, yr_and_section]);
+            INSERT INTO student_details (user_id, degree, yr_and_section, student_type)
+            VALUES (?, ?, ?, ?)
+        `, [userId, degree, yr_and_section, student_type]);
 
         return { message: 'student account added successfully' };
     } catch (err) {
@@ -54,12 +54,12 @@ exports.add = async (student) => {
 
 // Update a student by ID
 exports.updateStudent = (id, student) => {
-    const { first_name, middle_name, last_name, degree, yr_and_section } = student;
+    const { first_name, middle_name, last_name, degree, yr_and_section, student_type } = student;
     return db.execute(`
         UPDATE student_details 
         SET first_name = ?, middle_name = ?, last_name = ?, degree = ?, yr_and_section = ?
         WHERE user_id = ?
-    `, [first_name, middle_name, last_name, degree, yr_and_section, id]);
+    `, [first_name, middle_name, last_name, degree, yr_and_section, student_type, id]);
 };
 
 // Delete a student by ID

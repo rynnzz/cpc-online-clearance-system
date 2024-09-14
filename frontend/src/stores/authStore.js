@@ -28,12 +28,14 @@ export const useAuthStore = defineStore('auth', {
         throw error; // Rethrow error to handle it in the component
       }
     },
+    
     async logout() {
       this.userRole = null;
       this.token = null;
       localStorage.removeItem('userRole');
       localStorage.removeItem('token');
     },
+
     async initializeStore() {
       const role = localStorage.getItem('userRole');
       const token = localStorage.getItem('token');

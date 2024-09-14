@@ -22,24 +22,22 @@
           <thead>
             <tr class="bg-gray-200 text-left">
               <th class="p-4">#</th>
-              <th class="p-4">First Name</th>
-              <th class="p-4">Middle Name</th>
-              <th class="p-4">Last Name</th>
+              <th class="p-4">Full Name</th>
               <th class="p-4">Email</th>
               <th class="p-4">Degree</th>
               <th class="p-4">Year and Section</th>
+              <th class="p-4">Student Type</th>
               <th class="p-4">Actions</th>
             </tr>
           </thead>
           <tbody>
             <tr v-for="(student, index) in students" :key="student.id" class="border-b">
               <td class="p-4">{{ index + 1 }}</td>
-              <td class="p-4">{{ student.first_name }}</td>
-              <td class="p-4">{{ student.middle_name }}</td>
-              <td class="p-4">{{ student.last_name }}</td>
+              <td class="p-4">{{ student.first_name }} {{ student.middle_name }} {{ student.last_name }}</td>
               <td class="p-4">{{ student.email }}</td>
               <td class="p-4">{{ student.degree }}</td>
               <td class="p-4">{{ student.yr_and_section }}</td>
+              <td class="p-4">{{ student.student_type }}</td>
               <td class="p-4 space-x-2">
                 <button @click="editStudent(student)" class="bg-yellow-500 text-white px-3 py-1 rounded hover:bg-yellow-600 transition">Edit</button>
                 <button @click="deleteStudent(student.id)" class="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600 transition">Delete</button>
@@ -100,6 +98,13 @@
                   v-model="newStudent.yr_and_section"
                   type="text"
                   placeholder="Year and Section"
+                  class="p-2 border rounded w-full focus:outline-none focus:ring-2 focus:ring-blue-400"
+                  required
+                />
+                <input
+                  v-model="newStudent.student_type"
+                  type="text"
+                  placeholder="Student Type"
                   class="p-2 border rounded w-full focus:outline-none focus:ring-2 focus:ring-blue-400"
                   required
                 />
@@ -168,7 +173,7 @@ import { useStudentStore } from '@/stores/studentStore'
 
 const studentStore = useStudentStore()
 
-const newStudent = ref({ first_name: '', middle_name: '', last_name: '', email: '', password: '', degree: '', yr_and_section: '' })
+const newStudent = ref({ first_name: '', middle_name: '', last_name: '', email: '', password: '', degree: '', yr_and_section: '', student_type: '' })
 const isAddModalOpen = ref(false)
 const isEditing = ref(false)
 const currentStudent = ref({})
@@ -179,7 +184,7 @@ const openAddModal = () => {
 
 const closeAddModal = () => {
   isAddModalOpen.value = false
-  newStudent.value = { first_name: '', middle_name: '', last_name: '', email: '', password: '', degree: '', yr_and_section: '' }
+  newStudent.value = { first_name: '', middle_name: '', last_name: '', email: '', password: '', degree: '', yr_and_section: '', student_type: '' }
 }
 
 onMounted(async () => {

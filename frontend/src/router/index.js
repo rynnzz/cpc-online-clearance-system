@@ -13,9 +13,9 @@ const router = createRouter({
     },
 
     {
-      path: '/admin-dashboard',
-      name: 'admin-dashboard',
-      component: () => import('../views/admin/AdminDashboardView.vue'),
+      path: '/dashboard',
+      name: 'dashboard',
+      component: () => import('../views/DashboardView.vue'),
       meta: { requiresAuth: true }
     },
 
@@ -48,19 +48,6 @@ const router = createRouter({
     },
 
     {
-      path: '/student-dashboard',
-      name: 'student-dashboard',
-      component: () => import('../views/student/StudentDashboardView.vue'),
-      meta: { requiresAuth: true }
-    },
-    {
-      path: '/student-dashboard',
-      name: 'student-dashboard',
-      component: () => import('../views/student/StudentDashboardView.vue'),
-      meta: { requiresAuth: true }
-    },
-
-    {
       path: '/view-clearance',
       name: 'view-clearance',
       component: () => import('../views/student/ClearanceView.vue'),
@@ -85,13 +72,6 @@ const router = createRouter({
       path: '/approve-clearance',
       name: 'approve-clearance',
       component: () => import('../views/teacher/ApproveClearanceView.vue'),
-      meta: { requiresAuth: true }
-    },
-
-    {
-      path: '/teacher-dashboard',
-      name: 'teacher-dashboard',
-      component: () => import('../views/teacher/TeacherDashboardView.vue'),
       meta: { requiresAuth: true }
     },
   ]
