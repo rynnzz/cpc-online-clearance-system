@@ -79,7 +79,7 @@
         <!-- Teacher-specific menu items -->
         <li 
           :class="['flex items-center px-6 py-3 hover:bg-gray-700 cursor-pointer text-lg', { 'bg-gray-600': activeItem === 'dashboard' }]"
-          @click="navigateTo('teacher-dashboard')"
+          @click="navigateTo('dashboard')"
         >
           <i class="fas fa-tachometer-alt mr-3"></i> 
           <span v-if="isOpen">Dashboard</span>
@@ -92,6 +92,42 @@
           <i class="fas fa-check-circle mr-3"></i> 
           <span v-if="isOpen">Approve Clearance</span>
         </li>
+      </ul>
+
+      <ul v-if="userRole === 'student'">
+        <!-- Teacher-specific menu items -->
+        <li 
+          :class="['flex items-center px-6 py-3 hover:bg-gray-700 cursor-pointer text-lg', { 'bg-gray-600': activeItem === 'dashboard' }]"
+          @click="navigateTo('dashboard')"
+        >
+          <i class="fas fa-tachometer-alt mr-3"></i> 
+          <span v-if="isOpen">Dashboard</span>
+        </li>
+        
+        <li 
+          :class="['flex items-center px-6 py-3 hover:bg-gray-700 cursor-pointer text-lg', { 'bg-gray-600': activeItem === 'view-clearance' }]"
+          @click="navigateTo('view-clearance')"
+        >
+          <i class="fa-solid fa-newspaper mr-3"></i>
+          <span v-if="isOpen">View Clearance</span>
+        </li>
+
+        <li 
+          :class="['flex items-center px-6 py-3 hover:bg-gray-700 cursor-pointer text-lg', { 'bg-gray-600': activeItem === 'upload-document' }]"
+          @click="navigateTo('upload-document')"
+        >
+          <i class="fa-regular fa-square-plus mr-3"></i>
+          <span v-if="isOpen">Upload Document</span>
+        </li>
+
+        <li 
+          :class="['flex items-center px-6 py-3 hover:bg-gray-700 cursor-pointer text-lg', { 'bg-gray-600': activeItem === 'profile' }]"
+          @click="navigateTo('profile')"
+        >
+        <i class="fa-solid fa-circle-user mr-3"></i>
+          <span v-if="isOpen">Student Profile</span>
+        </li>
+
       </ul>
 
     </div>
@@ -119,7 +155,7 @@ const route = useRoute();
 // Navigation function with active item setting
 const navigateTo = (item) => {
   activeItem.value = item; // Set the clicked item as active
-  dropdownOpen.value = (item === 'teacher-accounts' || item === 'student-accounts'); // Keep dropdown open for sub-items
+  // dropdownOpen.value = (item === 'teacher-accounts' || item === 'student-accounts'); // Keep dropdown open for sub-items
 
   const routes = {
     'dashboard': '/dashboard',
@@ -127,8 +163,10 @@ const navigateTo = (item) => {
     'students-status': '/students-status',
     'teacher-accounts': '/manage-teacher-accounts',
     'student-accounts': '/manage-student-accounts',
-    'teacher-dashboard': '/teacher-dashboard',
     'approve-clearance': '/approve-clearance',
+    'view-clearance': '/view-clearance',
+    'profile': '/profile',
+    'upload-document': '/upload-document',
   };
 
   router.push(routes[item]); // Navigate to the new route
@@ -149,8 +187,10 @@ watch(
       '/students-status': 'students-status',
       '/manage-teacher-accounts': 'teacher-accounts',
       '/manage-student-accounts': 'student-accounts',
-      '/teacher-dashboard': 'teacher-dashboard',
       '/approve-clearance': 'approve-clearance',
+      '/view-clearance': 'view-clearance',
+      '/profile': 'profile',
+      '/upload-document': 'upload-document',
     };
 
     // Set the active item based on the current route path
@@ -166,8 +206,10 @@ onMounted(() => {
     '/students-status': 'students-status',
     '/manage-teacher-accounts': 'teacher-accounts',
     '/manage-student-accounts': 'student-accounts',
-    '/teacher-dashboard': 'teacher-dashboard',
     '/approve-clearance': 'approve-clearance',
+    '/view-clearance': 'view-clearance',
+    '/profile': 'profile',
+    '/upload-document': 'upload-document',
   };
   activeItem.value = pathToActiveItem[route.path] || 'dashboard';
   authStore.initializeStore();

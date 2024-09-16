@@ -24,6 +24,7 @@
               <tr class="bg-gray-200 text-left">
                 <th class="p-4">#</th>
                 <th class="p-4">Full Name</th>
+                <th class="p-4">Email</th>
                 <th class="p-4">Year And Sections Handled</th>
                 <th class="p-4">Subjects Handled</th>
                 <th class="p-4">Teacher Type</th>
@@ -34,6 +35,7 @@
               <tr v-for="(teacher, index) in teachers" :key="teacher.id" class="border-b">
                 <td class="p-4">{{ index + 1 }}</td>
                 <td class="p-4">{{ teacher.last_name }}, {{ teacher.first_name }} {{ teacher.middle_name }}</td>
+                <td class="p-4">{{ teacher.email }}</td>
                 <td class="p-4">{{ teacher.yr_and_section }}</td>
                 <td class="p-4">{{ teacher.subjects }}</td>
                 <td class="p-4">{{ teacher.teacher_type }}</td>

@@ -12,12 +12,14 @@
         <div class="flex justify-between items-center mb-6">
           <h1 class="text-4xl font-bold">Manage Student Accounts</h1>
           <!-- Button to trigger Add Student Modal -->
-          <button @click="openAddModal" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition">
+          <button @click="openAddModal" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition flex items-center">
+          <i class="fas fa-plus mr-2"></i>
             Add New
           </button>
         </div>
 
         <!-- Students Table -->
+        <div class="table-wrapper">
         <table class="table-auto w-full bg-white shadow rounded">
           <thead>
             <tr class="bg-gray-200 text-left">
@@ -38,13 +40,18 @@
               <td class="p-4">{{ student.degree }}</td>
               <td class="p-4">{{ student.yr_and_section }}</td>
               <td class="p-4">{{ student.student_type }}</td>
-              <td class="p-4 space-x-2">
-                <button @click="editStudent(student)" class="bg-yellow-500 text-white px-3 py-1 rounded hover:bg-yellow-600 transition">Edit</button>
-                <button @click="deleteStudent(student.id)" class="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600 transition">Delete</button>
-              </td>
+              <td class="p-4 space-x-2 flex">
+                  <button @click="editStudent(student)" class="bg-yellow-500 text-white px-3 py-1 rounded hover:bg-yellow-600 transition flex items-center">
+                    <i class="fas fa-edit mr-2"></i> Edit
+                  </button>
+                  <button @click="deleteStudent(student.id)" class="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600 transition flex items-center">
+                    <i class="fas fa-trash mr-2"></i> Delete
+                  </button>
+                </td>
             </tr>
           </tbody>
         </table>
+        </div>
 
         <!-- Add Student Modal -->
         <div v-if="isAddModalOpen" class="fixed inset-0 bg-gray-800 bg-opacity-50 flex justify-center items-center z-50">
@@ -128,23 +135,58 @@
             <form @submit.prevent="updateStudent">
               <div class="space-y-4">
                 <input
-                  v-model="currentStudent.name"
+                  v-model="currentStudent.first_name"
                   type="text"
-                  placeholder="Student Name"
+                  placeholder="First Name"
+                  class="p-2 border rounded w-full"
+                  required
+                />
+                <input
+                  v-model="currentStudent.middle_name"
+                  type="text"
+                  placeholder="Middle Name"
+                  class="p-2 border rounded w-full"
+                  required
+                />
+                <input
+                  v-model="currentStudent.last_name"
+                  type="text"
+                  placeholder="Last Name"
                   class="p-2 border rounded w-full"
                   required
                 />
                 <input
                   v-model="currentStudent.email"
-                  type="email"
+                  type="text"
                   placeholder="Email"
                   class="p-2 border rounded w-full"
                   required
                 />
                 <input
-                  v-model="currentStudent.subject"
+                  v-model="currentStudent.password"
+                  type="password"
+                  placeholder="Password"
+                  class="p-2 border rounded w-full"
+                  required
+                />
+                <input
+                  v-model="currentStudent.degree"
                   type="text"
-                  placeholder="Subject"
+                  placeholder="Degree"
+                  class="p-2 border rounded w-full"
+                  required
+                />
+                <input
+                  v-model="currentStudent.yr_and_section"
+                  type="text"
+                  placeholder="Year and Section"
+                  class="p-2 border rounded w-full"
+                  required
+                />
+                <input
+                  v-model="currentStudent.student_type"
+                  type="text"
+                  placeholder="Student Type"
                   class="p-2 border rounded w-full"
                   required
                 />
@@ -235,5 +277,33 @@ const students = computed(() => studentStore.students);
 </script>
 
 <style scoped>
-/* Add custom styles if necessary */
+
+table {
+  width: 100%;
+  min-width: 600px; /* Minimum width to prevent layout breaking */
+}
+th, td {
+  padding: 0.75rem; /* Adjust padding for better mobile appearance */
+  text-align: left;
+}
+
+@media (max-width: 768px) {
+  th, td {
+    font-size: 14px; /* Reduce text size on smaller devices */
+  }
+
+  .p-4 {
+    padding: 0.5rem; /* Reduce padding for smaller screens */
+  }
+
+  .btn {
+    padding: 0.25rem 0.5rem; /* Reduce button padding for small screens */
+  }
+
+  .modal-content {
+    width: 90%; /* Make modal width responsive */
+    max-width: none; /* Override max-width for modal */
+  }
+}
+
 </style>
