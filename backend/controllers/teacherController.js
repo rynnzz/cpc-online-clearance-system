@@ -46,3 +46,17 @@ exports.deleteTeacher = async (req, res) => {
         res.status(500).json({ error: err.message });
     }
 };
+
+exports.getTeacherSubjects = async (req, res) => {
+    const { teacherId } = req.params;
+    if (!teacherId) {
+        return res.status(400).json({ error: 'Teacher ID is required' });
+    }
+
+    try {
+        const subjects = await teacherModel.getTeacherSubjects(teacherId);
+        res.json(subjects);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+};

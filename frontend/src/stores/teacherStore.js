@@ -4,13 +4,15 @@ import teacherService from '@/services/teacherService';
 export const useTeacherStore = defineStore('teacherStore', {
   state: () => ({
     teachers: [],
+    teacherSubjects: {}, // New state to store subjects by teacher ID
     isLoading: false,
+    isSubjectsLoading: false, // Track loading state for subjects
   }),
   actions: {
     async fetchTeachers() {
       this.isLoading = true;
       try {
-        const response = await teacherService.getAllTeachers(); // Ensure this method aligns with the backend service
+        const response = await teacherService.getAllTeachers();
         this.teachers = response.data;
       } catch (error) {
         console.error("Failed to fetch teachers:", error);
@@ -26,7 +28,7 @@ export const useTeacherStore = defineStore('teacherStore', {
       } catch (error) {
         console.error("Failed to add teacher:", error);
       }
-    },    
+    },
 
     async updateTeacher(teacher) {
       try {
@@ -46,6 +48,23 @@ export const useTeacherStore = defineStore('teacherStore', {
         this.teachers = this.teachers.filter(t => t.id !== id); // Remove teacher from the list
       } catch (error) {
         console.error("Failed to delete teacher:", error);
+      }
+    },
+
+    async fetchTeacherSubjects() {
+      if (!this.currentTeacher || !this.currentTeacher.id) {
+        console.error("No teacher selected or teacher ID is missing.");
+        return;
+      }
+
+      this.isLoading = true;
+      try {
+        const response = await teacherService.getSubjectsForTeacher(this.currentTeacher.id);
+        this.teacherSubjects = response.data;
+      } catch (error) {
+        console.error("Failed to fetch teacher subjects:", error);
+      } finally {
+        this.isLoading = false;
       }
     }
   }

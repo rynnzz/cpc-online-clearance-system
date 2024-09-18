@@ -17,5 +17,6 @@ export default {
 
   deleteStudent(id) {
     return axios.delete(`${API_URL}/${id}`);
-  }
+  },
+
 };

@@ -191,11 +191,14 @@
                 />
               </div>
               <div class="mt-6 flex justify-end space-x-2">
-                <button @click="cancelEdit" type="button" class="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600 transition flex items-center">
-                  <i class="fas fa-times mr-2"></i> Cancel
+                <button 
+                @click="cancelEdit" 
+                type="button" 
+                class="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600 transition flex items-center">
+                Cancel
                 </button>
                 <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition flex items-center">
-                  <i class="fas fa-check mr-2"></i> Update Teacher
+                Update Teacher
                 </button>
               </div>
             </form>

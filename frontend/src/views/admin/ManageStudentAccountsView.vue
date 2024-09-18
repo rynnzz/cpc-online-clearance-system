@@ -95,34 +95,52 @@
                   required
                 />
                 <input
-                  v-model="newStudent.degree"
-                  type="text"
-                  placeholder="Degree"
-                  class="p-2 border rounded w-full focus:outline-none focus:ring-2 focus:ring-blue-400"
-                  required
-                />
-                <input
                   v-model="newStudent.yr_and_section"
                   type="text"
                   placeholder="Year and Section"
                   class="p-2 border rounded w-full focus:outline-none focus:ring-2 focus:ring-blue-400"
                   required
                 />
-                <input
-                  v-model="newStudent.student_type"
-                  type="text"
-                  placeholder="Student Type"
-                  class="p-2 border rounded w-full focus:outline-none focus:ring-2 focus:ring-blue-400"
-                  required
-                />
+                <select 
+                v-model="newStudent.degree" 
+                class="p-2 border rounded w-full focus:outline-none focus:ring-2 focus:ring-blue-400"
+                required>
+                  <option value="" disabled>Select Degree</option>
+                  <option value="BSIT">BSIT</option>
+                  <option value="BSHM">BSHM</option>
+                  <option value="BSED">BSED</option>
+                  <option value="BEED">BEED</option>
+                </select>
+
+                <select v-model="newStudent.student_type"
+                class="p-2 border rounded w-full focus:outline-none focus:ring-2 focus:ring-blue-400" 
+                required>
+                  <option value="" disabled>Select Student Type</option>
+                  <option value="Regular">Regular</option>
+                  <option value="Irregular">Irregular</option>
+                  <!-- Add more options as needed -->
+                </select>
+
+                <!-- Display selected subjects -->
+                <!-- <div v-if="selectedSubjects.length > 0">
+                  <h3>Subjects</h3>
+                  <ul>
+                    <li v-for="subject in selectedSubjects" :key="subject">{{ subject }}</li>
+                  </ul>
+                </div> -->
               </div>
               <div class="mt-6 flex justify-end space-x-2">
-                <button @click="closeAddModal" type="button" class="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600 transition">
-                  Cancel
-                </button>
-                <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition">
-                  Add Student
-                </button>
+                <button
+                class="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600 transition flex items-center"
+                @click="closeAddModal">
+                Cancel
+              </button>
+
+                <button
+                class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition flex items-center"
+                type="submit">
+                Add Student
+              </button>
               </div>
             </form>
           </div>
@@ -230,13 +248,8 @@ const closeAddModal = () => {
 }
 
 onMounted(async () => {
-  console.log('Component mounted'); // Add this line
-  try {
-    await studentStore.fetchStudents();
-  } catch (error) {
-    console.error("Error fetching Students:", error);
-  }
-})
+  await studentStore.fetchStudents();
+});
 
 const handleAddStudent = async () => {
   try {

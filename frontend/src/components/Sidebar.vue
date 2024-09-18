@@ -1,9 +1,9 @@
 <template>
   <div class="flex">
     <!-- Sidebar -->
-    <div :class="['h-screen bg-gray-800 text-white transition-all duration-300', { 'w-72': isOpen, 'w-20': !isOpen }]">
-
-      <!-- <div class="p-6 text-xl font-semibold">
+    <div :class="['bg-gray-800 text-white transition-all duration-300', { 'w-72': isOpen, 'w-20': !isOpen }]" 
+         class="h-screen overflow-y-auto">
+      <div class="p-6 text-xl font-semibold">
         <button 
           @click="toggleSidebar"
           class="text-white bg-gray-700 hover:bg-gray-600 rounded-lg px-2 py-1"
@@ -11,7 +11,8 @@
           <i :class="isOpen ? 'fas fa-chevron-left' : 'fas fa-chevron-right'"></i>
         </button>
         <span v-if="isOpen" class="ml-3">Menu</span>
-      </div> -->
+      </div>
+
       <div class="p-6 text-xl font-semibold">CPC Online Clearance</div>
 
       <ul v-if="userRole === 'admin'">
@@ -86,7 +87,7 @@
         </li>
         
         <li 
-          :class="['flex items-center px-6 py-3 hover:bg-gray-700 cursor-pointer text-lg', { 'bg-gray-600': activeItem === 'approve-requests' }]"
+          :class="['flex items-center px-6 py-3 hover:bg-gray-700 cursor-pointer text-lg', { 'bg-gray-600': activeItem === 'approve-clearance' }]"
           @click="navigateTo('approve-clearance')"
         >
           <i class="fas fa-check-circle mr-3"></i> 
@@ -95,7 +96,7 @@
       </ul>
 
       <ul v-if="userRole === 'student'">
-        <!-- Teacher-specific menu items -->
+        <!-- Student-specific menu items -->
         <li 
           :class="['flex items-center px-6 py-3 hover:bg-gray-700 cursor-pointer text-lg', { 'bg-gray-600': activeItem === 'dashboard' }]"
           @click="navigateTo('dashboard')"
@@ -124,10 +125,9 @@
           :class="['flex items-center px-6 py-3 hover:bg-gray-700 cursor-pointer text-lg', { 'bg-gray-600': activeItem === 'profile' }]"
           @click="navigateTo('profile')"
         >
-        <i class="fa-solid fa-circle-user mr-3"></i>
+          <i class="fa-solid fa-circle-user mr-3"></i>
           <span v-if="isOpen">Student Profile</span>
         </li>
-
       </ul>
 
     </div>
@@ -148,14 +148,13 @@ const router = useRouter();
 const route = useRoute();
 
 // Toggle Sidebar visibility
-// const toggleSidebar = () => {
-//   isOpen.value = !isOpen.value;
-// };
+const toggleSidebar = () => {
+  isOpen.value = !isOpen.value;
+};
 
 // Navigation function with active item setting
 const navigateTo = (item) => {
   activeItem.value = item; // Set the clicked item as active
-  // dropdownOpen.value = (item === 'teacher-accounts' || item === 'student-accounts'); // Keep dropdown open for sub-items
 
   const routes = {
     'dashboard': '/dashboard',
@@ -217,8 +216,26 @@ onMounted(() => {
 </script>
 
 <style scoped>
-/* Custom styles for bigger menu items and more spacing */
+/* Custom styles for sidebar and scrolling */
+.bg-gray-800 {
+  background-color: #2d3748;
+}
+
+.h-screen {
+  height: 100vh;
+}
+
+.overflow-y-auto {
+  overflow-y: auto;
+}
+
 ul li {
   margin-bottom: 1rem; /* Adds more spacing between menu items */
+}
+
+@media (max-width: 768px) {
+  .w-72 {
+    width: 100%; /* Make sidebar full width on smaller screens */
+  }
 }
 </style>

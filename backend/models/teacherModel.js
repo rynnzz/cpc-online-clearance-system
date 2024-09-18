@@ -92,3 +92,13 @@ exports.deleteTeacher = (id) => {
         WHERE user_id = ?
     `, [id]);
 };
+
+// Get subjects handled by a teacher
+exports.getTeacherSubjects = async (teacherId) => {
+    try {
+        const [rows] = await db.query('SELECT subjects FROM teacher_details WHERE user_id = ?', [teacherId]);
+        return rows;
+    } catch (error) {
+        throw new Error('Error fetching teacher subjects');
+    }
+};

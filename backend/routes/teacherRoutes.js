@@ -1,17 +1,22 @@
+// routes/teacherRoutes.js
+
 const express = require('express');
 const router = express.Router();
 const teacherController = require('../controllers/teacherController');
 
-// Get all teachers
+// Route to get all teachers
 router.get('/', teacherController.getAllTeachers);
 
-// Add a new teacher
+// Route to add a new teacher
 router.post('/', teacherController.addTeacher);
 
-// Update a teacher
+// Route to update a teacher
 router.put('/:id', teacherController.updateTeacher);
 
-// Delete a teacher
+// Route to delete a teacher
 router.delete('/:id', teacherController.deleteTeacher);
+
+// Route to get subjects handled by a specific teacher
+router.get('/:teacherId/subjects', teacherController.getTeacherSubjects);
 
 module.exports = router;
