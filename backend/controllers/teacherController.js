@@ -28,10 +28,15 @@ exports.addTeacher = async (req, res) => {
 exports.updateTeacher = async (req, res) => {
     const { id } = req.params;
     const updatedTeacher = req.body;
+
     try {
-        await teacherModel.updateTeacher(id, updatedTeacher);
-        res.json({ message: 'Teacher updated successfully' });
+        // Call the model's update function
+        const result = await teacherModel.updateTeacher(id, updatedTeacher);
+        
+        // Send a success response
+        res.json({ message: 'Teacher updated successfully', result });
     } catch (err) {
+        console.error(`Error updating teacher: ${err.message}`); // Log error for debugging
         res.status(500).json({ error: err.message });
     }
 };

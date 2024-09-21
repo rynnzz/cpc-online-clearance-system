@@ -22,9 +22,4 @@ export default {
   deleteTeacher(id) {
     return axios.delete(`${API_URL}/${id}`);
   },
-
-  // Get subjects handled by a specific teacher
-  getTeacherSubjects(teacherId) {
-    return axios.get(`${API_URL}/${teacherId}/subjects`);
-  }
-};
+}

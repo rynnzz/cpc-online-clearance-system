@@ -6,9 +6,9 @@ const saltRounds = 10;
 exports.getAllTeachers = () => {
     // Query to join users and teacher_details tables and fetch all teacher details
     return db.execute(`
-        SELECT u.id, u.role, u.first_name, u.middle_name, u.last_name, u.email, td.yr_and_section, td.subjects, td.teacher_type
+        SELECT u.id, u.role, u.first_name, u.middle_name, u.last_name, u.email, td.yr_and_section, td.teacher_type
         FROM users u
-        JOIN teacher_details td ON u.id = td.user_id
+        JOIN teacher_details td ON u.id = td.teacher_id
         WHERE u.role = 'teacher'
     `);
 };
@@ -16,9 +16,9 @@ exports.getAllTeachers = () => {
 // Find teacher by ID with user information
 exports.findById = (id) => {
     return db.execute(`
-        SELECT u.id, u.role, u.first_name, u.middle_name, u.last_name, u.email, td.yr_and_section, td.subjects, td.teacher_type
+        SELECT u.id, u.role, u.first_name, u.middle_name, u.last_name, u.email, td.yr_and_section, td.teacher_type
         FROM users u
-        JOIN teacher_details td ON u.id = td.user_id
+        JOIN teacher_details td ON u.id = td.teacher_id
         WHERE u.id = ?
     `, [id]);
 };
@@ -41,9 +41,17 @@ exports.addTeacher = async (teacher) => {
 
         // Insert teacher details into the teacher_details table
         await db.execute(`
-            INSERT INTO teacher_details (user_id, yr_and_section, subjects, teacher_type)
-            VALUES (?, ?, ?, ?)
-        `, [userId, yr_and_section, subjects, teacher_type]);
+            INSERT INTO teacher_details (teacher_id, yr_and_section, teacher_type)
+            VALUES (?, ?, ?)
+        `, [userId, yr_and_section, teacher_type]);
+
+        // Insert each subject into the teacher_subjects table
+        for (const subjectId of subjects) {
+            await db.execute(`
+                INSERT INTO teacher_subjects (teacher_id, subject_id)
+                VALUES (?, ?)
+            `, [userId, subjectId]);
+        }
 
         return { message: 'Teacher account added successfully' };
     } catch (err) {
@@ -54,28 +62,73 @@ exports.addTeacher = async (teacher) => {
 
 // Update a teacher by ID
 exports.updateTeacher = async (id, teacher) => {
-    const { first_name, middle_name, last_name, email, password, yr_and_section, subjects, teacher_type } = teacher;
+    const {
+        first_name,
+        middle_name,
+        last_name,
+        email,
+        password,
+        yr_and_section,
+        subjects = [],
+        teacher_type
+    } = teacher;
 
     try {
-        // Hash the password (if provided)
-        let hashedPassword;
-        if (password) {
-            hashedPassword = await bcrypt.hash(password, saltRounds);
-        }
+        const hashedPassword = password ? await bcrypt.hash(password, saltRounds) : null;
+
+        // Prepare values for users table
+        const userValues = [
+            first_name || null,
+            middle_name || null,
+            last_name || null,
+            email || null,
+            hashedPassword,
+            id
+        ];
+
+        // Log the update attempt
+        console.log('Updating user with values:', userValues);
 
         // Update the users table
-        await db.execute(`
+        const userResult = await db.execute(`
             UPDATE users
             SET first_name = ?, middle_name = ?, last_name = ?, email = ?, password = ?
             WHERE id = ? AND role = 'teacher'
-        `, [first_name, middle_name, last_name, email, hashedPassword || password, id]);
+        `, userValues);
+
+        if (userResult[0].affectedRows === 0) {
+            throw new Error('No user found to update');
+        }
 
         // Update the teacher_details table
-        await db.execute(`
+        const teacherResult = await db.execute(`
             UPDATE teacher_details
-            SET yr_and_section = ?, subjects = ?, teacher_type = ?
+            SET yr_and_section = ?, teacher_type = ?
             WHERE user_id = ?
-        `, [yr_and_section, subjects, teacher_type, id]);
+        `, [yr_and_section || null, teacher_type || null, id]);
+
+        // Check teacher update
+        if (teacherResult[0].affectedRows === 0) {
+            throw new Error('No teacher details found to update');
+        }
+
+        // Clear existing subjects for the teacher
+        await db.execute(`
+            DELETE FROM teacher_subjects
+            WHERE teacher_id = ?
+        `, [id]);
+
+        // Insert new subjects if any
+        if (subjects.length > 0) {
+            const subjectInsertQueries = subjects.map(subject => {
+                return db.execute(`
+                    INSERT INTO teacher_subjects (teacher_id, subject_id)
+                    VALUES (?, (SELECT id FROM subjects WHERE name = ?))
+                `, [id, subject]);
+            });
+
+            await Promise.all(subjectInsertQueries);
+        }
 
         return { message: 'Teacher account updated successfully' };
     } catch (err) {
@@ -83,6 +136,7 @@ exports.updateTeacher = async (id, teacher) => {
         throw new Error(`Error updating teacher account: ${err.message}`);
     }
 };
+
 
 
 // Delete a teacher by ID

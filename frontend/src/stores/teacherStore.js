@@ -4,9 +4,7 @@ import teacherService from '@/services/teacherService';
 export const useTeacherStore = defineStore('teacherStore', {
   state: () => ({
     teachers: [],
-    teacherSubjects: {}, // New state to store subjects by teacher ID
     isLoading: false,
-    isSubjectsLoading: false, // Track loading state for subjects
   }),
   actions: {
     async fetchTeachers() {
@@ -31,16 +29,31 @@ export const useTeacherStore = defineStore('teacherStore', {
     },
 
     async updateTeacher(teacher) {
+      const originalTeacher = { ...teacher }; // Make a copy of the original teacher for rollback if needed
+    
       try {
-        await teacherService.updateTeacher(teacher.id, teacher); // Update teacher information
+        // Attempt to update the teacher information in the backend
+        await teacherService.updateTeacher(teacher.id, teacher);
+    
+        // Find the index of the teacher in the local list
         const index = this.teachers.findIndex(t => t.id === teacher.id);
+        
+        // If the teacher exists in the local list, update their information
         if (index !== -1) {
           this.teachers[index] = { ...teacher }; // Update the teacher in the list
         }
       } catch (error) {
         console.error("Failed to update teacher:", error);
+    
+        // Optionally, revert to the original data if needed
+        const index = this.teachers.findIndex(t => t.id === originalTeacher.id);
+        if (index !== -1) {
+          this.teachers[index] = originalTeacher; // Revert back to original data
+        }
       }
     },
+    
+    
 
     async deleteTeacher(id) {
       try {
@@ -50,22 +63,5 @@ export const useTeacherStore = defineStore('teacherStore', {
         console.error("Failed to delete teacher:", error);
       }
     },
-
-    async fetchTeacherSubjects() {
-      if (!this.currentTeacher || !this.currentTeacher.id) {
-        console.error("No teacher selected or teacher ID is missing.");
-        return;
-      }
-
-      this.isLoading = true;
-      try {
-        const response = await teacherService.getSubjectsForTeacher(this.currentTeacher.id);
-        this.teacherSubjects = response.data;
-      } catch (error) {
-        console.error("Failed to fetch teacher subjects:", error);
-      } finally {
-        this.isLoading = false;
-      }
-    }
   }
 });
