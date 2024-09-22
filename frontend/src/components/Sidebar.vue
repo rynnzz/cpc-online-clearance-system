@@ -2,11 +2,11 @@
   <div class="flex">
     <!-- Sidebar -->
     <div :class="['bg-gray-800 text-white transition-all duration-300', { 'w-72': isOpen, 'w-20': !isOpen }]" 
-         class="h-screen overflow-y-auto">
+         class="h-screen overflow-y-auto shadow-md border-r border-gray-700">
       <div class="p-6 text-xl font-semibold">
         <button 
           @click="toggleSidebar"
-          class="text-white bg-gray-700 hover:bg-gray-600 rounded-lg px-2 py-1"
+          class="btn btn-outline text-white rounded-lg"
         >
           <i :class="isOpen ? 'fas fa-chevron-left' : 'fas fa-chevron-right'"></i>
         </button>
@@ -42,7 +42,7 @@
         </li>
 
         <!-- Separator -->
-        <hr class="my-4 border-gray-600 m-3" />
+        <hr class="my-4 border-gray-700 m-3" />
 
         <!-- Manage Accounts Dropdown -->
         <li class="relative">
@@ -56,17 +56,17 @@
           </div>
           <ul 
             v-if="dropdownOpen || activeItem === 'teacher-accounts' || activeItem === 'student-accounts'" 
-            class="ml-8 mt-2 bg-gray-800 rounded-lg"
+            class="ml-8 mt-2 bg-gray-700 rounded-lg"
           >
             <li 
-              :class="['flex items-center px-6 py-3 hover:bg-gray-600 cursor-pointer text-lg', { 'bg-gray-600': activeItem === 'teacher-accounts' }]"
+              :class="['flex items-center px-6 py-3 hover:bg-gray-600 cursor-pointer text-lg', { 'bg-gray-500': activeItem === 'teacher-accounts' }]"
               @click="navigateTo('teacher-accounts')"
             >
               <i class="fas fa-chalkboard-teacher mr-3"></i> 
               <span v-if="isOpen">Teacher Accounts</span>
             </li>
             <li 
-              :class="['flex items-center px-6 py-3 hover:bg-gray-600 cursor-pointer text-lg', { 'bg-gray-600': activeItem === 'student-accounts' }]"
+              :class="['flex items-center px-6 py-3 hover:bg-gray-600 cursor-pointer text-lg', { 'bg-gray-500': activeItem === 'student-accounts' }]"
               @click="navigateTo('student-accounts')"
             >
               <i class="fas fa-user mr-3"></i> 
@@ -218,7 +218,11 @@ onMounted(() => {
 <style scoped>
 /* Custom styles for sidebar and scrolling */
 .bg-gray-800 {
-  background-color: #2d3748;
+  background-color: #2d3748; /* Dark background */
+}
+
+.text-white {
+  color: #ffffff; /* White text */
 }
 
 .h-screen {

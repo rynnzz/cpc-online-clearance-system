@@ -5,13 +5,14 @@ const teacherModel = require('../models/teacherModel');
 // Get all teachers
 exports.getAllTeachers = async (req, res) => {
     try {
-        const role = 'teacher'; // Specify the role you want to filter by
-        const [teachers] = await teacherModel.getAllTeachers(role);
-        res.json(teachers);
+        const role = 'teacher'; // Ensure role matches your data
+        const teachers = await teacherModel.getAllTeachers(role);
+        res.json(teachers); // Respond with the list of teachers
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
 };
+
 
 // Add a new teacher
 exports.addTeacher = async (req, res) => {

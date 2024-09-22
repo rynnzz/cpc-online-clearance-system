@@ -1,6 +1,6 @@
 <template>
   <div class="min-h-screen bg-cover bg-center flex items-center justify-center" style="background-image: url('/src/assets/login-background.png');">
-    <div class="bg-white p-8 rounded-lg shadow-lg w-full max-w-sm">
+    <div class="bg-base-100 p-8 rounded-lg shadow-lg w-full max-w-sm">
       <h2 class="text-2xl font-bold mb-6 text-center">Welcome!</h2>
       <form @submit.prevent="handleLogin">
         <!-- Email Input -->
@@ -8,7 +8,7 @@
           <input
             type="email"
             v-model="email"
-            class="w-full px-10 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400"
+            class="input w-full px-10 border focus:outline-none focus:ring focus:ring-blue-400"
             placeholder="Email"
             required
           />
@@ -21,7 +21,7 @@
           <input
             :type="passwordVisible ? 'text' : 'password'"
             v-model="password"
-            class="w-full px-10 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400"
+            class="input w-full px-10 border focus:outline-none focus:ring focus:ring-blue-400"
             placeholder="Password"
             required
           />
@@ -38,12 +38,12 @@
           </button>
         </div>
 
-        <button type="submit" class="w-full bg-blue-500 text-white py-2 rounded-md hover:bg-blue-600">
+        <button type="submit" class="btn btn-primary w-full">
           Login
         </button>
       </form>
       <div class="text-center mt-4">
-        <a href="#" class="text-blue-500">Forgot Password? Click Here!</a>
+        <a href="#" class="text-blue-500 hover:underline">Forgot Password? Click Here!</a>
       </div>
     </div>
   </div>
@@ -70,13 +70,15 @@ const handleLogin = async () => {
   try {
     await authStore.login({ email: email.value, password: password.value });
 
-    // Check the role from the store
-    const { userRole } = authStore;
-    router.push('/dashboard')
+    // Redirect to the dashboard
+    router.push('/dashboard');
   } catch (error) {
     console.error('Login failed:', error.message);
     alert('Invalid credentials');
   }
 };
-
 </script>
+
+<style scoped>
+/* Optional custom styles if needed */
+</style>

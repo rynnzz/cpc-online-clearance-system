@@ -3,15 +3,50 @@ const bcrypt = require('bcryptjs');
 const saltRounds = 10;
 
 // Get all teachers with user information
-exports.getAllTeachers = () => {
-    // Query to join users and teacher_details tables and fetch all teacher details
-    return db.execute(`
-        SELECT u.id, u.role, u.first_name, u.middle_name, u.last_name, u.email, td.yr_and_section, td.teacher_type
-        FROM users u
-        JOIN teacher_details td ON u.id = td.teacher_id
-        WHERE u.role = 'teacher'
-    `);
+exports.getAllTeachers = async (role) => {
+    try {
+        const [teachers] = await db.execute(
+            `
+            SELECT 
+                u.id, 
+                u.first_name, 
+                u.middle_name, 
+                u.last_name, 
+                u.email, 
+                u.role, 
+                td.yr_and_section, 
+                td.teacher_type, 
+                GROUP_CONCAT(s.name) AS subjects
+            FROM users u
+            JOIN teacher_details td ON u.id = td.teacher_id
+            LEFT JOIN teacher_subjects ts ON ts.teacher_id = u.id
+            LEFT JOIN subjects s ON s.id = ts.subject_id
+            WHERE u.role = ?
+            GROUP BY u.id, u.first_name, u.middle_name, u.last_name, u.email, td.yr_and_section, td.teacher_type
+            `,
+            [role]
+        );
+
+        if (!teachers || teachers.length === 0) {
+            return []; 
+        }
+
+        return teachers.map(row => ({
+            ...row,
+            subjects: row.subjects ? row.subjects.split(',') : [] // Split subjects into an array
+        }));
+    } catch (error) {
+        throw new Error(error.message);
+    }
 };
+
+
+// exports.getAllTeachers = () => {
+//     return db.execute(`
+//       SELECT * FROM users WHERE role = 'teacher';
+//     `);
+//   }
+
 
 // Find teacher by ID with user information
 exports.findById = (id) => {
@@ -104,7 +139,7 @@ exports.updateTeacher = async (id, teacher) => {
         const teacherResult = await db.execute(`
             UPDATE teacher_details
             SET yr_and_section = ?, teacher_type = ?
-            WHERE user_id = ?
+            WHERE teacher_id = ?
         `, [yr_and_section || null, teacher_type || null, id]);
 
         // Check teacher update
@@ -143,16 +178,6 @@ exports.updateTeacher = async (id, teacher) => {
 exports.deleteTeacher = (id) => {
     return db.execute(`
         DELETE FROM teacher_details 
-        WHERE user_id = ?
+        WHERE teacher_id = ?
     `, [id]);
-};
-
-// Get subjects handled by a teacher
-exports.getTeacherSubjects = async (teacherId) => {
-    try {
-        const [rows] = await db.query('SELECT subjects FROM teacher_details WHERE user_id = ?', [teacherId]);
-        return rows;
-    } catch (error) {
-        throw new Error('Error fetching teacher subjects');
-    }
 };

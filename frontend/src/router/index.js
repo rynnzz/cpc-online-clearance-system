@@ -20,6 +20,13 @@ const router = createRouter({
     },
 
     {
+      path: '/test-table',
+      name: 'test-table',
+      component: () => import('../views/TestTable.vue'),
+      meta: { requiresAuth: true }
+    },
+
+    {
       path: '/approve-requests',
       name: 'approve-requests',
       component: () => import('../views/admin/ApproveRequestsView.vue'),
