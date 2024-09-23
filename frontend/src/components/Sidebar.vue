@@ -2,16 +2,7 @@
   <div class="flex">
     <!-- Sidebar -->
     <div :class="['bg-gray-800 text-white transition-all duration-300', { 'w-72': isOpen, 'w-20': !isOpen }]" 
-         class="h-screen overflow-y-auto shadow-md border-r border-gray-700">
-      <div class="p-6 text-xl font-semibold">
-        <button 
-          @click="toggleSidebar"
-          class="btn btn-outline text-white rounded-lg"
-        >
-          <i :class="isOpen ? 'fas fa-chevron-left' : 'fas fa-chevron-right'"></i>
-        </button>
-        <span v-if="isOpen" class="ml-3">Menu</span>
-      </div>
+         class="h-full overflow-y-auto shadow-md border-r border-gray-700">
 
       <div class="p-6 text-xl font-semibold">CPC Online Clearance</div>
 
@@ -146,11 +137,6 @@ const dropdownOpen = ref(false);
 const activeItem = ref('');
 const router = useRouter();
 const route = useRoute();
-
-// Toggle Sidebar visibility
-const toggleSidebar = () => {
-  isOpen.value = !isOpen.value;
-};
 
 // Navigation function with active item setting
 const navigateTo = (item) => {

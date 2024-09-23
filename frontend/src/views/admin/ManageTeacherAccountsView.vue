@@ -1,5 +1,5 @@
 <template>
-  <div class="p-8 relative bg-gray-900 text-gray-100">
+  <div class="p-8 relative bg-gray-900 text-gray-100 w-full">
     <div class="flex justify-between items-center mb-6">
       <h1 class="text-4xl font-bold">Manage Teacher Accounts</h1>
       <div class="flex space-x-2">
@@ -19,25 +19,20 @@
             <th class="p-4">#</th>
             <th class="p-4">Full Name</th>
             <th class="p-4">Email</th>
-            <th class="p-4">Year & Sections</th>
-            <th class="p-4">Subjects Handled</th>
             <th class="p-4">Teacher Type</th>
             <th class="p-4">Actions</th>
           </tr>
         </thead>
         <tbody>
-          <tr v-for="(teacher, index) in teachers" :key="teacher.id" class="border-b border-gray-700 hover:bg-gray-600">
-            <td class="p-4">{{ index + 1 }}</td>
+          <tr v-for="(teacher, index) in paginatedTeachers" :key="teacher.id" class="border-b border-gray-700 hover:bg-gray-600">
+            <td class="p-4">{{ (currentPage - 1) * pageSize + index + 1 }}</td>
             <td class="p-4">{{ teacher.last_name }}, {{ teacher.first_name }} {{ teacher.middle_name }}</td>
             <td class="p-4">{{ teacher.email }}</td>
-            <td class="p-4">{{ teacher.yr_and_section }}</td>
-            <td class="p-4">
-              <button @click="openSubjectsModal(teacher.subjects)" class="btn btn-primary w-40">
-                View Subjects
-              </button>
-            </td>
             <td class="p-4">{{ teacher.teacher_type }}</td>
             <td class="p-4 flex space-x-2">
+              <button @click="openSubjectsModal(teacher.yearSectionSubjects)" class="btn btn-info">
+                View Subjects
+              </button>
               <button @click="openEditModal(teacher)" class="btn btn-warning">
                 <i class="fas fa-edit"></i>
               </button>
@@ -50,14 +45,22 @@
       </table>
     </div>
 
+    <div class="flex justify-end items-center my-4">
+  <button @click="previousPage" class="btn btn-primary mr-2" :disabled="currentPage === 1">Previous</button>
+  <span class="mr-4">Page {{ currentPage }} of {{ totalPages }}</span>
+  <button @click="nextPage" class="btn btn-primary ml-2" :disabled="currentPage >= totalPages">Next</button>
+    </div>
+
     <AddTeacherModal :isOpen="isAddModalOpen" :closeModal="closeAddModal" />
     <EditTeacherModal :isOpen="isEditModalOpen" :closeModal="closeEditModal" :teacher="currentTeacher" />
-    <SubjectsModal :isOpen="isSubjectsModalOpen" :subjects="currentSubjects" :closeModal="closeSubjectsModal" />
-
-    <!-- Bulk Add Modal -->
     <BulkAddModal :isOpen="isBulkAddModalOpen" :closeModal="closeBulkAddModal" />
 
-    <!-- Confirmation Modal -->
+    <SubjectsModal 
+      :isOpen="isSubjectsModalOpen" 
+      :closeModal="closeSubjectsModal" 
+      :yearSectionSubjects="currentYearSectionSubjects" 
+    />
+
     <input type="checkbox" id="confirmation-modal" class="modal-toggle" v-model="isConfirmationModalOpen" />
     <div class="modal">
       <div class="modal-box">
@@ -73,28 +76,56 @@
 </template>
 
 <script setup>
-import AddTeacherModal from '@/components/AddTeacherModal.vue';
-import EditTeacherModal from '@/components/EditTeacherModal.vue';
-import SubjectsModal from '@/components/TeacherSubjectsModal.vue';
-import BulkAddModal from '@/components/BulkAddModal.vue'; // Import the BulkAddModal
 import { ref, onMounted, computed } from 'vue';
 import { useTeacherStore } from '@/stores/teacherStore';
+import AddTeacherModal from '@/components/AddTeacherModal.vue';
+import EditTeacherModal from '@/components/EditTeacherModal.vue';
+import BulkAddModal from '@/components/BulkAddModal.vue';
+import SubjectsModal from '@/components/SubjectsModal.vue';
 
 const teacherStore = useTeacherStore();
 const isAddModalOpen = ref(false);
 const isEditModalOpen = ref(false);
+const isBulkAddModalOpen = ref(false);
 const isSubjectsModalOpen = ref(false);
-const isBulkAddModalOpen = ref(false); // State for Bulk Add Modal
 const isConfirmationModalOpen = ref(false);
 const teacherIdToDelete = ref(null);
 const currentTeacher = ref({});
-const currentSubjects = ref([]);
+const currentYearSectionSubjects = ref([]);
+
+const currentPage = ref(1);
+const pageSize = ref(10);
 
 onMounted(async () => {
   await teacherStore.fetchTeachers();
 });
 
-const teachers = computed(() => teacherStore.teachers);
+const teachers = computed(() => {
+  return teacherStore.teachers || [];
+});
+
+// Computed properties for pagination
+const paginatedTeachers = computed(() => {
+  const start = (currentPage.value - 1) * pageSize.value;
+  return teachers.value.slice(start, start + pageSize.value);
+});
+
+const totalPages = computed(() => {
+  return Math.ceil(teachers.value.length / pageSize.value);
+});
+
+// Pagination methods
+const nextPage = () => {
+  if (currentPage.value < totalPages.value) {
+    currentPage.value++;
+  }
+};
+
+const previousPage = () => {
+  if (currentPage.value > 1) {
+    currentPage.value--;
+  }
+};
 
 const openAddModal = () => {
   isAddModalOpen.value = true;
@@ -105,11 +136,11 @@ const closeAddModal = () => {
 };
 
 const openBulkAddModal = () => {
-  isBulkAddModalOpen.value = true; // Open the Bulk Add Modal
+  isBulkAddModalOpen.value = true;
 };
 
 const closeBulkAddModal = () => {
-  isBulkAddModalOpen.value = false; // Close the Bulk Add Modal
+  isBulkAddModalOpen.value = false;
 };
 
 const openEditModal = (teacher) => {
@@ -122,13 +153,14 @@ const closeEditModal = () => {
   currentTeacher.value = {};
 };
 
-const openSubjectsModal = (subjects) => {
-  currentSubjects.value = subjects;
+const openSubjectsModal = (yearSectionSubjects) => {
+  currentYearSectionSubjects.value = yearSectionSubjects;
   isSubjectsModalOpen.value = true;
 };
 
 const closeSubjectsModal = () => {
   isSubjectsModalOpen.value = false;
+  currentYearSectionSubjects.value = [];
 };
 
 const openConfirmationModal = (id) => {
@@ -151,36 +183,3 @@ const deleteTeacher = async (id) => {
   }
 };
 </script>
-
-<style scoped>
-.bg-gray-900 {
-  background-color: #1f2937; /* Dark background */
-}
-
-.text-gray-100 {
-  color: #ffffff; /* Light text */
-}
-
-.bg-gray-800 {
-  background-color: #2d3748; /* Darker table background */
-}
-
-.table {
-  border-collapse: collapse;
-  width: 100%;
-}
-
-.table th,
-.table td {
-  text-align: left;
-  padding: 1rem;
-}
-
-.border-b {
-  border-bottom: 1px solid #4b5563; /* Dark border for separation */
-}
-
-.hover\:bg-gray-600:hover {
-  background-color: #4b5563; /* Darker gray for hover effect */
-}
-</style>

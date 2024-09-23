@@ -3,64 +3,95 @@ const bcrypt = require('bcryptjs');
 const saltRounds = 10;
 
 // Get all teachers with user information
-exports.getAllTeachers = async (role) => {
+exports.getAllTeachers = async (role, page = 1, limit = 10) => {
     try {
-        const [teachers] = await db.execute(
+        const offset = (page - 1) * limit;
+
+        const [rows] = await db.execute(
             `
             SELECT 
-                u.id, 
+                u.id AS teacher_id, 
                 u.first_name, 
                 u.middle_name, 
                 u.last_name, 
                 u.email, 
                 u.role, 
-                td.yr_and_section, 
-                td.teacher_type, 
-                GROUP_CONCAT(s.name) AS subjects
+                td.teacher_type,
+                ts.course_year_and_section,
+                s.name AS subject_name
             FROM users u
             JOIN teacher_details td ON u.id = td.teacher_id
-            LEFT JOIN teacher_subjects ts ON ts.teacher_id = u.id
-            LEFT JOIN subjects s ON s.id = ts.subject_id
+            LEFT JOIN teacher_subjects tsub ON tsub.teacher_id = u.id
+            LEFT JOIN subjects s ON s.id = tsub.subject_id
+            LEFT JOIN teacher_sections ts ON ts.teacher_id = u.id
             WHERE u.role = ?
-            GROUP BY u.id, u.first_name, u.middle_name, u.last_name, u.email, td.yr_and_section, td.teacher_type
+            LIMIT ? OFFSET ?
             `,
-            [role]
+            [role, limit, offset]
         );
 
-        if (!teachers || teachers.length === 0) {
-            return []; 
+        if (!rows || rows.length === 0) {
+            return { teachers: [], total: 0 };
         }
 
-        return teachers.map(row => ({
-            ...row,
-            subjects: row.subjects ? row.subjects.split(',') : [] // Split subjects into an array
-        }));
+        // Get total count of teachers for pagination
+        const [totalRows] = await db.execute(
+            `SELECT COUNT(*) as count FROM users WHERE role = ?`,
+            [role]
+        );
+        const total = totalRows[0].count;
+
+        // Transform the flat result set into grouped data
+        const teachers = rows.reduce((acc, row) => {
+            const teacherId = row.teacher_id;
+
+            if (!acc[teacherId]) {
+                acc[teacherId] = {
+                    id: row.teacher_id,
+                    first_name: row.first_name,
+                    middle_name: row.middle_name,
+                    last_name: row.last_name,
+                    email: row.email,
+                    role: row.role,
+                    teacher_type: row.teacher_type,
+                    yearSectionSubjects: []
+                };
+            }
+
+            // Find if the year_and_section already exists in the teacher's array
+            let yearSection = acc[teacherId].yearSectionSubjects.find(ys => ys.course_year_and_section === row.course_year_and_section);
+
+            if (!yearSection) {
+                yearSection = {
+                    course_year_and_section: row.course_year_and_section,
+                    subjects: []
+                };
+                acc[teacherId].yearSectionSubjects.push(yearSection);
+            }
+
+            // Add the subject to the correct year and section
+            if (row.subject_name) {
+                yearSection.subjects.push(row.subject_name);
+            }
+
+            return acc;
+        }, {});
+
+        // Return the teachers as an array along with pagination info
+        return {
+            teachers: Object.values(teachers),
+            total,
+            totalPages: Math.ceil(total / limit),
+            currentPage: page,
+        };
     } catch (error) {
         throw new Error(error.message);
     }
 };
 
-
-// exports.getAllTeachers = () => {
-//     return db.execute(`
-//       SELECT * FROM users WHERE role = 'teacher';
-//     `);
-//   }
-
-
-// Find teacher by ID with user information
-exports.findById = (id) => {
-    return db.execute(`
-        SELECT u.id, u.role, u.first_name, u.middle_name, u.last_name, u.email, td.yr_and_section, td.teacher_type
-        FROM users u
-        JOIN teacher_details td ON u.id = td.teacher_id
-        WHERE u.id = ?
-    `, [id]);
-};
-
 // Add a new teacher
 exports.addTeacher = async (teacher) => {
-    const { first_name, middle_name, last_name, email, password, yr_and_section, subjects, teacher_type } = teacher;
+    const { first_name, middle_name, last_name, email, password, teacher_type, yearSectionSubjects } = teacher;
 
     try {
         // Hash the password
@@ -76,16 +107,37 @@ exports.addTeacher = async (teacher) => {
 
         // Insert teacher details into the teacher_details table
         await db.execute(`
-            INSERT INTO teacher_details (teacher_id, yr_and_section, teacher_type)
-            VALUES (?, ?, ?)
-        `, [userId, yr_and_section, teacher_type]);
+            INSERT INTO teacher_details (teacher_id, teacher_type)
+            VALUES (?, ?)
+        `, [userId, teacher_type]);
 
-        // Insert each subject into the teacher_subjects table
-        for (const subjectId of subjects) {
-            await db.execute(`
-                INSERT INTO teacher_subjects (teacher_id, subject_id)
+        // Insert each year & section along with the subjects they handle
+        for (const yearSection of yearSectionSubjects) {
+            const { course_year_and_section, subjects } = yearSection;
+
+            // Insert into teacher_sections table
+            const [sectionResult] = await db.execute(`
+                INSERT INTO teacher_sections (teacher_id, course_year_and_section)
                 VALUES (?, ?)
-            `, [userId, subjectId]);
+            `, [userId, course_year_and_section]);
+
+            const sectionId = sectionResult.insertId; // Get the inserted section_id
+
+            // Check if subjects exist before insertion
+            if (Array.isArray(subjects) && subjects.length > 0) {
+                for (const subjectId of subjects) {
+                    try {
+                        await db.execute(`
+                            INSERT INTO teacher_subjects (teacher_id, section_id, subject_id)
+                            VALUES (?, ?, ?)
+                        `, [userId, sectionId, subjectId]);
+                    } catch (insertError) {
+                        console.error(`Error inserting subject for teacher_id ${userId}, section_id ${sectionId}: ${insertError.message}`);
+                    }
+                }
+            } else {
+                console.warn(`No subjects found for year & section: ${course_year_and_section}`);
+            }
         }
 
         return { message: 'Teacher account added successfully' };
@@ -95,6 +147,9 @@ exports.addTeacher = async (teacher) => {
     }
 };
 
+
+
+
 // Update a teacher by ID
 exports.updateTeacher = async (id, teacher) => {
     const {
@@ -103,7 +158,7 @@ exports.updateTeacher = async (id, teacher) => {
         last_name,
         email,
         password,
-        yr_and_section,
+        course_yr_and_section,
         subjects = [],
         teacher_type
     } = teacher;
@@ -138,9 +193,9 @@ exports.updateTeacher = async (id, teacher) => {
         // Update the teacher_details table
         const teacherResult = await db.execute(`
             UPDATE teacher_details
-            SET yr_and_section = ?, teacher_type = ?
+            SET course_yr_and_section = ?, teacher_type = ?
             WHERE teacher_id = ?
-        `, [yr_and_section || null, teacher_type || null, id]);
+        `, [course_yr_and_section || null, teacher_type || null, id]);
 
         // Check teacher update
         if (teacherResult[0].affectedRows === 0) {

@@ -6,7 +6,6 @@
 
         <form @submit.prevent="handleAddTeacher">
           <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <!-- Left Side: Personal Information -->
             <div class="col-span-2 space-y-4">
               <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <input v-model="newTeacher.first_name" type="text" placeholder="First Name" class="input input-bordered w-full" required />
@@ -14,51 +13,61 @@
                 <input v-model="newTeacher.last_name" type="text" placeholder="Last Name" class="input input-bordered w-full" required />
                 <input v-model="newTeacher.email" type="email" placeholder="Email Address" class="input input-bordered w-full" required />
                 <input v-model="newTeacher.password" type="password" placeholder="Password" class="input input-bordered w-full" required />
-                <input v-model="newTeacher.yr_and_section" type="text" placeholder="Year and Sections Handled" class="input input-bordered w-full" required />
-                <input v-model="newTeacher.teacher_type" type="text" placeholder="Teacher Type" class="input input-bordered w-full" required />
+                <select v-model="newTeacher.teacher_type" class="input input-bordered w-full" required>
+                  <option value="" disabled>Select Teacher Type</option>
+                  <option value="full_time">Full Time</option>
+                  <option value="part_time">Part Time</option>
+                  <option value="guest">Guest</option>
+                </select>
               </div>
             </div>
           </div>
 
-          <!-- Subjects Handled Section -->
-          <div class="col-span-1 space-y-4 mt-4">
-            <h3 class="font-semibold text-primary">Select Subjects Handled</h3>
-            <input 
-              v-model="searchQuery" 
-              type="text" 
-              placeholder="Search Subjects..." 
-              class="input input-bordered w-full" />
-
-            <div class="overflow-y-auto max-h-96 border border-base-300 p-4 rounded mt-2">
+          <div class="space-y-6 mt-6">
+            <h3 class="font-semibold text-primary">Year & Section with Subjects</h3>
+            <div v-for="(yearSection, index) in yearSections" :key="index" class="mb-4 p-4 border border-base-300 rounded-md">
+              <div class="flex items-center space-x-4">
+                <input
+                  v-model="yearSection.course_year_and_section"
+                  type="text"
+                  placeholder="Year and Section"
+                  class="input input-bordered w-full mb-2"
+                  required
+                />
+                <button @click="removeYearSection(index)" type="button" class="btn btn-error">Remove</button>
+              </div>
               <div class="grid grid-cols-1 gap-2">
-                <div v-if="filteredSubjects.length === 0" class="text-red-500">No subjects found</div>
-                <div v-for="subject in filteredSubjects" :key="subject.id" class="flex items-center">
-                  <input 
-                    type="checkbox" 
-                    class="checkbox checkbox-primary" 
-                    :value="subject.name" 
-                    v-model="newTeacher.subjects" />
-                  <label class="ml-2 text-gray-300 text-sm">{{ subject.name }}</label>
+                <input 
+                  v-model="searchQueries[index]" 
+                  type="text" 
+                  placeholder="Search Subjects..." 
+                  class="input input-bordered w-full mb-2" 
+                />
+                <div class="overflow-y-auto max-h-96 border border-base-300 p-4 rounded">
+                  <div v-if="filteredSubjects(index).length === 0" class="text-red-500">No subjects found</div>
+                  <div v-for="subject in filteredSubjects(index)" :key="subject.id" class="flex items-center">
+                    <input 
+                      type="checkbox" 
+                      class="checkbox checkbox-primary" 
+                      :value="subject.id" 
+                      v-model="yearSection.subjects" 
+                    />
+                    <label class="ml-2 text-gray-300 text-sm">{{ subject.name }}</label>
+                  </div>
                 </div>
               </div>
             </div>
+            <button @click="addYearSection" type="button" class="btn btn-secondary mt-4">Add Year & Section</button>
           </div>
 
-          <!-- Action Buttons -->
           <div class="mt-6 flex justify-end space-x-4">
-            <button 
-              @click="props.closeModal" 
-              type="button" 
-              class="btn btn-secondary">
-              Cancel
-            </button>
-            <button 
-              type="submit" 
-              class="btn btn-primary">
-              Add Teacher
-            </button>
+            <button @click="props.closeModal" type="button" class="btn btn-secondary">Cancel</button>
+            <button type="submit" class="btn btn-primary" :disabled="loading">{{ loading ? 'Adding...' : 'Add Teacher' }}</button>
           </div>
         </form>
+
+        <div v-if="message" class="mt-4 text-green-500">{{ message }}</div>
+        <div v-if="error" class="mt-4 text-red-500">{{ error }}</div>
       </div>
     </div>
   </transition>
@@ -69,58 +78,103 @@ import { onMounted, ref, computed } from 'vue';
 import { useTeacherStore } from '@/stores/teacherStore';
 import { useSubjectStore } from '@/stores/subjectStore';
 
+// Props from parent component
 const props = defineProps({
   isOpen: Boolean,
   closeModal: Function
 });
 
-const searchQuery = ref('');
+// Form Data
 const newTeacher = ref({
   first_name: '',
   middle_name: '',
   last_name: '',
   email: '',
   password: '',
-  yr_and_section: '',
   teacher_type: '',
   subjects: []
 });
 
+// Store for handling multiple "Year & Section" with subjects
+const yearSections = ref([{ course_year_and_section: '', subjects: [] }]);
+const searchQueries = ref(['']);
+const message = ref('');
+const error = ref('');
+const loading = ref(false);
+
+// Store setup
 const teacherStore = useTeacherStore();
 const subjectStore = useSubjectStore();
 
 onMounted(async () => {
   try {
-    await subjectStore.getAllSubjects();
-  } catch (error) {
-    console.error('Error fetching data:', error);
+    await subjectStore.getAllSubjects(); // Fetch subjects on modal mount
+  } catch (err) {
+    console.error('Error fetching subjects:', err);
   }
 });
 
-const handleAddTeacher = async () => {
-  try {
-    const subjectIds = newTeacher.value.subjects.map(subject => {
-      return subjects.value.find(s => s.name === subject).id;
-    }).filter(id => id);
+// Add new "Year & Section"
+const addYearSection = () => {
+  yearSections.value.push({ course_year_and_section: '', subjects: [] });
+  searchQueries.value.push('');
+};
 
-    const teacherData = {
+// Remove a "Year & Section"
+const removeYearSection = (index) => {
+  yearSections.value.splice(index, 1);
+  searchQueries.value.splice(index, 1);
+};
+
+// Filter subjects based on search query
+const filteredSubjects = (index) => {
+  return subjects.value.filter(subject => 
+    subject.name.toLowerCase().includes(searchQueries.value[index].toLowerCase())
+  );
+};
+
+// Handle form submission
+const handleAddTeacher = async () => {
+  loading.value = true; // Start loading
+  try {
+    const formattedData = {
       ...newTeacher.value,
-      subjects: subjectIds
+      yearSectionSubjects: yearSections.value
     };
 
-    await teacherStore.addTeacher(teacherData);
-    props.closeModal();
-  } catch (error) {
-    console.error('Error adding teacher:', error);
+    await teacherStore.addTeacher(formattedData); // Send data to store
+    message.value = 'Teacher added successfully!';
+    resetForm(); // Reset form after submission
+    props.closeModal(); // Close modal on success
+  } catch (err) {
+    console.error('Error adding teacher:', err);
+    error.value = 'Failed to add teacher. Please try again.';
+  } finally {
+    loading.value = false; // End loading
+    setTimeout(() => {
+      message.value = '';
+      error.value = '';
+    }, 5000); // Clear messages after 5 seconds
   }
 };
 
+// Reset form
+const resetForm = () => {
+  newTeacher.value = {
+    first_name: '',
+    middle_name: '',
+    last_name: '',
+    email: '',
+    password: '',
+    teacher_type: '',
+    subjects: []
+  };
+  yearSections.value = [{ course_year_and_section: '', subjects: [] }];
+  searchQueries.value = [''];
+};
+
+// Computed subjects from store
 const subjects = computed(() => subjectStore.subjects);
-const filteredSubjects = computed(() => {
-  return subjects.value.filter(subject => 
-    subject.name.toLowerCase().includes(searchQuery.value.toLowerCase())
-  );
-});
 </script>
 
 <style scoped>

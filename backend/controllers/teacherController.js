@@ -6,12 +6,16 @@ const teacherModel = require('../models/teacherModel');
 exports.getAllTeachers = async (req, res) => {
     try {
         const role = 'teacher'; // Ensure role matches your data
-        const teachers = await teacherModel.getAllTeachers(role);
-        res.json(teachers); // Respond with the list of teachers
+        const page = parseInt(req.query.page) || 1; // Get page from query params
+        const limit = parseInt(req.query.limit) || 10; // Get limit from query params
+
+        const teachers = await teacherModel.getAllTeachers(role, page, limit);
+        res.json(teachers); // Respond with the list of teachers and pagination info
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
 };
+
 
 
 // Add a new teacher

@@ -1,12 +1,6 @@
 <template>
   <div class="flex flex-col min-h-screen">
-    <!-- Header -->
-    <Header />
-
-    <div class="flex flex-1">
-      <!-- Sidebar -->
-      <Sidebar />
-
+    <div class="flex flex-1">  
       <!-- Main Content Area -->
       <div class="flex-1 p-6 bg-gray-100">
         <h1 class="text-3xl font-bold mb-6">Clearance Approvals</h1>
@@ -103,8 +97,6 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
-import Header from '@/components/Header.vue'
-import Sidebar from '@/components/Sidebar.vue'
 import { useStudentStore } from '@/stores/studentStore'
 import { useTeacherStore } from '@/stores/teacherStore'
 
