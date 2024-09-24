@@ -6,7 +6,7 @@ export const useTeacherStore = defineStore('teacherStore', {
     teachers: [],
     isLoading: false,
     currentPage: 1,
-    pageSize: 5, // Set your desired page size
+    pageSize: 10, // Set your desired page size
   }),
 
   getters: {
@@ -32,7 +32,8 @@ export const useTeacherStore = defineStore('teacherStore', {
             return {
               ...teacher,
               yearSectionSubjects: yearSectionSubjects.map(section => ({
-                course_year_and_section: section.course_year_and_section,
+                course: section.course,
+                year_and_section: section.year_and_section,
                 subjects: section.subjects || []
               })),
             };

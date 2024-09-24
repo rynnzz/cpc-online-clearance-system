@@ -2,7 +2,7 @@
   <div class="flex">
     <!-- Sidebar -->
     <div :class="['bg-gray-800 text-white transition-all duration-300', { 'w-72': isOpen, 'w-20': !isOpen }]" 
-         class="h-full overflow-y-auto shadow-md border-r border-gray-700">
+         class="h-full overflow-x-auto shadow-md border-r border-gray-700">
 
       <div class="p-6 text-xl font-semibold">CPC Online Clearance</div>
 
@@ -203,29 +203,9 @@ onMounted(() => {
 
 <style scoped>
 /* Custom styles for sidebar and scrolling */
-.bg-gray-800 {
-  background-color: #2d3748; /* Dark background */
-}
-
-.text-white {
-  color: #ffffff; /* White text */
-}
-
-.h-screen {
-  height: 100vh;
-}
-
-.overflow-y-auto {
-  overflow-y: auto;
-}
 
 ul li {
   margin-bottom: 1rem; /* Adds more spacing between menu items */
 }
 
-@media (max-width: 768px) {
-  .w-72 {
-    width: 100%; /* Make sidebar full width on smaller screens */
-  }
-}
 </style>

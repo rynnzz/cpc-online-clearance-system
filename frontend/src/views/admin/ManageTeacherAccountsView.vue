@@ -1,7 +1,7 @@
 <template>
-  <div class="p-8 relative bg-gray-900 text-gray-100 w-full">
+  <div class="p-8 bg-gray-900 text-gray-100 w-full">
     <div class="flex justify-between items-center mb-6">
-      <h1 class="text-4xl font-bold">Manage Teacher Accounts</h1>
+      <h1 class="text-4xl sm:text-2xl font-bold">Manage Teacher Accounts</h1>
       <div class="flex space-x-2">
         <button @click="openAddModal" class="btn btn-primary flex items-center">
           <i class="fas fa-plus mr-2"></i> Add New
@@ -12,38 +12,38 @@
       </div>
     </div>
 
-    <div class="overflow-x-auto">
-      <table class="table w-full bg-gray-800 shadow-md border border-gray-700">
-        <thead>
-          <tr class="bg-gray-700">
-            <th class="p-4">#</th>
-            <th class="p-4">Full Name</th>
-            <th class="p-4">Email</th>
-            <th class="p-4">Teacher Type</th>
-            <th class="p-4">Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="(teacher, index) in paginatedTeachers" :key="teacher.id" class="border-b border-gray-700 hover:bg-gray-600">
-            <td class="p-4">{{ (currentPage - 1) * pageSize + index + 1 }}</td>
-            <td class="p-4">{{ teacher.last_name }}, {{ teacher.first_name }} {{ teacher.middle_name }}</td>
-            <td class="p-4">{{ teacher.email }}</td>
-            <td class="p-4">{{ teacher.teacher_type }}</td>
-            <td class="p-4 flex space-x-2">
-              <button @click="openSubjectsModal(teacher.yearSectionSubjects)" class="btn btn-info">
-                View Subjects
-              </button>
-              <button @click="openEditModal(teacher)" class="btn btn-warning">
-                <i class="fas fa-edit"></i>
-              </button>
-              <button @click="openConfirmationModal(teacher.id)" class="btn btn-error">
-                <i class="fas fa-trash"></i>
-              </button>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
+  <table class="table-auto overflow-x-auto w-full bg-gray-800 shadow-md border border-gray-700">
+    <thead>
+      <tr class="bg-gray-700">
+        <th class="p-4 text-sm text-left">#</th>
+        <th class="p-4 text-sm text-left">Full Name</th>
+        <th class="p-4 text-sm text-left">Email</th>
+        <th class="p-4 text-sm text-left">Teacher Type</th>
+        <th class="p-4 text-sm text-left">Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr v-for="(teacher, index) in paginatedTeachers" :key="teacher.id" class="border-b border-gray-700 hover:bg-gray-600 md:overflow-hidden">
+        <td class="p-4 text-sm">{{ (currentPage - 1) * pageSize + index + 1 }}</td>
+        <td class="p-4 text-sm">{{ teacher.last_name }}, {{ teacher.first_name }} {{ teacher.middle_name }}</td>
+        <td class="p-4 text-sm">{{ teacher.email }}</td>
+        <td class="p-4 text-sm">{{ teacher.teacher_type }}</td>
+        <!-- Adjust button layout for smaller screens -->
+        <td class="p-4 flex flex-col sm:flex-row sm:space-x-2 space-y-2 sm:space-y-0">
+          <button @click="openSubjectsModal(teacher.yearSectionSubjects)" class="btn btn-info text-xs sm:text-sm">
+            Subjects
+          </button>
+          <button @click="openEditModal(teacher)" class="btn btn-warning text-xs sm:text-sm">
+            <i class="fas fa-edit"></i>
+          </button>
+          <button @click="openConfirmationModal(teacher.id)" class="btn btn-error text-xs sm:text-sm">
+            <i class="fas fa-trash"></i>
+          </button>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
 
     <div class="flex justify-end items-center my-4">
   <button @click="previousPage" class="btn btn-primary mr-2" :disabled="currentPage === 1">Previous</button>
@@ -54,13 +54,8 @@
     <AddTeacherModal :isOpen="isAddModalOpen" :closeModal="closeAddModal" />
     <EditTeacherModal :isOpen="isEditModalOpen" :closeModal="closeEditModal" :teacher="currentTeacher" />
     <BulkAddModal :isOpen="isBulkAddModalOpen" :closeModal="closeBulkAddModal" />
-
     <SubjectsModal 
-      :isOpen="isSubjectsModalOpen" 
-      :closeModal="closeSubjectsModal" 
-      :yearSectionSubjects="currentYearSectionSubjects" 
-    />
-
+      :isOpen="isSubjectsModalOpen" :closeModal="closeSubjectsModal" :yearSectionSubjects="currentYearSectionSubjects" />
     <input type="checkbox" id="confirmation-modal" class="modal-toggle" v-model="isConfirmationModalOpen" />
     <div class="modal">
       <div class="modal-box">
@@ -107,8 +102,10 @@ const teachers = computed(() => {
 // Computed properties for pagination
 const paginatedTeachers = computed(() => {
   const start = (currentPage.value - 1) * pageSize.value;
-  return teachers.value.slice(start, start + pageSize.value);
+  const paginated = teachers.value.slice(start, start + pageSize.value);
+  return paginated;
 });
+
 
 const totalPages = computed(() => {
   return Math.ceil(teachers.value.length / pageSize.value);

@@ -9,7 +9,7 @@ const isLoginPage = computed(() => route.path === '/'); // Check if current path
 </script>
 
 <template>
-  <div class="flex flex-col w-full min-h-screen bg-base-100">
+  <div class="flex flex-col w-screen min-h-screen bg-base-100">
     <!-- Import the Header Component -->
     <Header v-if="!isLoginPage" />
 

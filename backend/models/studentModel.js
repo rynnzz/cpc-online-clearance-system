@@ -8,7 +8,7 @@ exports.getAllStudents = () => {
     return db.execute(`
         SELECT u.id, u.role, u.first_name, u.middle_name, u.last_name, u.email, sd.degree, sd.yr_and_section, sd.student_type
         FROM users u
-        JOIN student_details sd ON u.id = sd.user_id
+        JOIN student_details sd ON u.id = sd.student_id
         WHERE u.role = 'student'
     `);
 };
@@ -18,7 +18,7 @@ exports.findById = (id) => {
     return db.execute(`
         SELECT u.id, u.role, u.first_name, u.middle_name, u.last_name, u.email, sd.degree, sd.yr_and_section, sd.student_type
         FROM users u
-        JOIN student_details sd ON u.id = sd.user_id
+        JOIN student_details sd ON u.id = sd.student_id
         WHERE u.id = ?
     `, [id]);
 };
@@ -41,7 +41,7 @@ exports.addStudent = async (student) => {
 
         // Insert student details into the student_details table
         await db.execute(`
-            INSERT INTO student_details (user_id, degree, yr_and_section, student_type)
+            INSERT INTO student_details (student_id, degree, yr_and_section, student_type)
             VALUES (?, ?, ?, ?)
         `, [userId, degree, yr_and_section, student_type]);
 
@@ -58,7 +58,7 @@ exports.updateStudent = (id, student) => {
     return db.execute(`
         UPDATE student_details 
         SET first_name = ?, middle_name = ?, last_name = ?, degree = ?, yr_and_section = ?
-        WHERE user_id = ?
+        WHERE student_id = ?
     `, [first_name, middle_name, last_name, degree, yr_and_section, student_type, id]);
 };
 
@@ -66,6 +66,6 @@ exports.updateStudent = (id, student) => {
 exports.deleteStudent = (id) => {
     return db.execute(`
         DELETE FROM student_details 
-        WHERE user_id = ?
+        WHERE student_id = ?
     `, [id]);
 };

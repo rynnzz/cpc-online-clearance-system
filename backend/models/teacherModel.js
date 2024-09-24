@@ -3,10 +3,11 @@ const bcrypt = require('bcryptjs');
 const saltRounds = 10;
 
 // Get all teachers with user information
-exports.getAllTeachers = async (role, page = 1, limit = 10) => {
+exports.getAllTeachers = async (role, page = 1, limit = 50000) => {
     try {
         const offset = (page - 1) * limit;
 
+        // Fetch the teacher details with subjects and sections
         const [rows] = await db.execute(
             `
             SELECT 
@@ -17,7 +18,8 @@ exports.getAllTeachers = async (role, page = 1, limit = 10) => {
                 u.email, 
                 u.role, 
                 td.teacher_type,
-                ts.course_year_and_section,
+                ts.course,
+                ts.year_and_section,
                 s.name AS subject_name
             FROM users u
             JOIN teacher_details td ON u.id = td.teacher_id
@@ -30,10 +32,6 @@ exports.getAllTeachers = async (role, page = 1, limit = 10) => {
             [role, limit, offset]
         );
 
-        if (!rows || rows.length === 0) {
-            return { teachers: [], total: 0 };
-        }
-
         // Get total count of teachers for pagination
         const [totalRows] = await db.execute(
             `SELECT COUNT(*) as count FROM users WHERE role = ?`,
@@ -41,53 +39,74 @@ exports.getAllTeachers = async (role, page = 1, limit = 10) => {
         );
         const total = totalRows[0].count;
 
+        // If no results, return empty array and total count of 0
+        if (!rows || rows.length === 0) {
+            return { teachers: [], total, totalPages: 0, currentPage: page };
+        }
+
         // Transform the flat result set into grouped data
-        const teachers = rows.reduce((acc, row) => {
+        const teachersMap = rows.reduce((acc, row) => {
             const teacherId = row.teacher_id;
 
+            // Create a new teacher entry if it doesn't exist
             if (!acc[teacherId]) {
                 acc[teacherId] = {
-                    id: row.teacher_id,
+                    id: teacherId,
                     first_name: row.first_name,
                     middle_name: row.middle_name,
                     last_name: row.last_name,
                     email: row.email,
                     role: row.role,
                     teacher_type: row.teacher_type,
-                    yearSectionSubjects: []
+                    yearSectionSubjects: [],
                 };
             }
 
-            // Find if the year_and_section already exists in the teacher's array
-            let yearSection = acc[teacherId].yearSectionSubjects.find(ys => ys.course_year_and_section === row.course_year_and_section);
+            // Add year and section if it exists
+            if (row.year_and_section) {
+                // Check for the existing course and year/section combination
+                let yearSection = acc[teacherId].yearSectionSubjects.find(
+                    ys => ys.course === row.course && ys.year_and_section === row.year_and_section
+                );
 
-            if (!yearSection) {
-                yearSection = {
-                    course_year_and_section: row.course_year_and_section,
-                    subjects: []
-                };
-                acc[teacherId].yearSectionSubjects.push(yearSection);
-            }
+                // If not found, create a new entry
+                if (!yearSection) {
+                    yearSection = {
+                        course: row.course,
+                        year_and_section: row.year_and_section,
+                        subjects: [],
+                    };
+                    acc[teacherId].yearSectionSubjects.push(yearSection);
+                }
 
-            // Add the subject to the correct year and section
-            if (row.subject_name) {
-                yearSection.subjects.push(row.subject_name);
+                // Add the subject if it exists and avoid duplicates
+                if (row.subject_name && !yearSection.subjects.includes(row.subject_name)) {
+                    yearSection.subjects.push(row.subject_name);
+                }
             }
 
             return acc;
         }, {});
 
-        // Return the teachers as an array along with pagination info
+        // Convert the teachers map to an array
+        const teachersArray = Object.values(teachersMap);
+
+        // Return the teachers along with pagination info
         return {
-            teachers: Object.values(teachers),
+            teachers: teachersArray,
             total,
-            totalPages: Math.ceil(total / limit),
+            totalPages: Math.ceil(total / limit), // Calculate total pages
             currentPage: page,
         };
     } catch (error) {
-        throw new Error(error.message);
+        // Improved error handling
+        console.error('Error fetching teachers:', error);
+        throw new Error('Failed to fetch teachers: ' + error.message);
     }
 };
+
+
+
 
 // Add a new teacher
 exports.addTeacher = async (teacher) => {
@@ -113,13 +132,13 @@ exports.addTeacher = async (teacher) => {
 
         // Insert each year & section along with the subjects they handle
         for (const yearSection of yearSectionSubjects) {
-            const { course_year_and_section, subjects } = yearSection;
+            const { course, year_and_section, subjects } = yearSection;
 
             // Insert into teacher_sections table
             const [sectionResult] = await db.execute(`
-                INSERT INTO teacher_sections (teacher_id, course_year_and_section)
-                VALUES (?, ?)
-            `, [userId, course_year_and_section]);
+                INSERT INTO teacher_sections (teacher_id, course, year_and_section)
+                VALUES (?, ?, ?)
+            `, [userId, course, year_and_section]);
 
             const sectionId = sectionResult.insertId; // Get the inserted section_id
 
@@ -136,7 +155,7 @@ exports.addTeacher = async (teacher) => {
                     }
                 }
             } else {
-                console.warn(`No subjects found for year & section: ${course_year_and_section}`);
+                console.warn(`No subjects found for year & section: ${course, year_and_section}`);
             }
         }
 
@@ -150,6 +169,7 @@ exports.addTeacher = async (teacher) => {
 
 
 
+
 // Update a teacher by ID
 exports.updateTeacher = async (id, teacher) => {
     const {
@@ -158,9 +178,9 @@ exports.updateTeacher = async (id, teacher) => {
         last_name,
         email,
         password,
-        course_yr_and_section,
-        subjects = [],
-        teacher_type
+        subjects = [], // List of subject IDs
+        teacher_type,
+        yearSections = [] // Expecting an array of { course, year_and_section, subjects }
     } = teacher;
 
     try {
@@ -193,13 +213,31 @@ exports.updateTeacher = async (id, teacher) => {
         // Update the teacher_details table
         const teacherResult = await db.execute(`
             UPDATE teacher_details
-            SET course_yr_and_section = ?, teacher_type = ?
+            SET teacher_type = ?
             WHERE teacher_id = ?
-        `, [course_yr_and_section || null, teacher_type || null, id]);
+        `, [teacher_type || null, id]);
 
         // Check teacher update
         if (teacherResult[0].affectedRows === 0) {
             throw new Error('No teacher details found to update');
+        }
+
+        // Clear existing sections for the teacher
+        await db.execute(`
+            DELETE FROM teacher_sections
+            WHERE teacher_id = ?
+        `, [id]);
+
+        // Insert new sections if any
+        if (yearSections.length > 0) {
+            const sectionInsertQueries = yearSections.map(section => {
+                return db.execute(`
+                    INSERT INTO teacher_sections (teacher_id, course, year_and_section)
+                    VALUES (?, ?, ?)
+                `, [id, section.course, section.year_and_section]);
+            });
+
+            await Promise.all(sectionInsertQueries);
         }
 
         // Clear existing subjects for the teacher
@@ -226,6 +264,7 @@ exports.updateTeacher = async (id, teacher) => {
         throw new Error(`Error updating teacher account: ${err.message}`);
     }
 };
+
 
 
 

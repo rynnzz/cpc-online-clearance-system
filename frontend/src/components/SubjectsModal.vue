@@ -4,9 +4,12 @@
       <h2 class="text-lg font-bold">Subjects per Year & Section</h2>
       <div class="py-4">
         <ul>
+          <!-- Loop through each course, year, and section -->
           <li v-for="(item, index) in yearSectionSubjects" :key="index">
-            <strong>{{ item.course_year_and_section }}:</strong>
+            <!-- Display course and year/section together -->
+            <strong>{{ item.course }} - {{ item.year_and_section }}:</strong>
             <ul class="p-3">
+              <!-- Display the subjects for that course/year/section -->
               <li class="p-1" v-for="(subject, idx) in item.subjects" :key="idx">{{ subject }}</li>
             </ul>
           </li>

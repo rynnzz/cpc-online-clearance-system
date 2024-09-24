@@ -1,9 +1,9 @@
 <template>
-  <header class="bg-gray-800 text-white flex justify-between items-center p-4 md:flex-row flex-col border-b border-gray-700">
+  <header class="bg-gray-800 text-white flex justify-between items-center p-4 md:flex-row flex-col border-b border-gray-700 sm:w-screen">
     <h3 class="text-2xl font-bold mb-2 md:mb-0">
-      Welcome Admin!
+      Welcome !
     </h3>
-    <div class="flex items-center space-x-4">
+    <div class="flex items-center space-x-4 mr-2">
       <!-- Notifications Button -->
       <button class="relative">
         <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">

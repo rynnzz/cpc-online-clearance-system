@@ -15,35 +15,41 @@
                 <input v-model="newTeacher.password" type="password" placeholder="Password" class="input input-bordered w-full" required />
                 <select v-model="newTeacher.teacher_type" class="input input-bordered w-full" required>
                   <option value="" disabled>Select Teacher Type</option>
-                  <option value="full_time">Full Time</option>
-                  <option value="part_time">Part Time</option>
-                  <option value="guest">Guest</option>
+                  <option value="Full Time">Full Time</option>
+                  <option value="Part Time">Part Time</option>
+                  <option value="Guest">Guest</option>
                 </select>
               </div>
             </div>
           </div>
 
           <div class="space-y-6 mt-6">
-            <h3 class="font-semibold text-primary">Year & Section with Subjects</h3>
-            <div v-for="(yearSection, index) in yearSections" :key="index" class="mb-4 p-4 border border-base-300 rounded-md">
+            <h3 class="font-semibold text-primary">Section and Subjects</h3>
+            <div v-for="(yearSection, index) in yearSections" :key="index" class="mb-4 p-4 border border-base-500 rounded-md">
+              <select v-model="yearSection.course" class="input input-bordered w-auto mb-2" required>
+                  <option value="" disabled>Select Course</option>
+                  <option value="BSIT">BSIT</option>
+                  <option value="BSHM">BSHM</option>
+                  <option value="BSED">BSED</option>
+                  <option value="BEED">BEED</option>
+                </select>
               <div class="flex items-center space-x-4">
                 <input
-                  v-model="yearSection.course_year_and_section"
+                  v-model="yearSection.year_and_section"
                   type="text"
                   placeholder="Year and Section"
-                  class="input input-bordered w-full mb-2"
+                  class="input input-bordered w-auto mb-2"
                   required
                 />
-                <button @click="removeYearSection(index)" type="button" class="btn btn-error">Remove</button>
               </div>
-              <div class="grid grid-cols-1 gap-2">
+                <div class="overflow-y-auto max-h-96 border border-base-400 p-4 rounded">
+                  <div class="grid grid-cols-1 gap-2">
                 <input 
                   v-model="searchQueries[index]" 
                   type="text" 
                   placeholder="Search Subjects..." 
                   class="input input-bordered w-full mb-2" 
                 />
-                <div class="overflow-y-auto max-h-96 border border-base-300 p-4 rounded">
                   <div v-if="filteredSubjects(index).length === 0" class="text-red-500">No subjects found</div>
                   <div v-for="subject in filteredSubjects(index)" :key="subject.id" class="flex items-center">
                     <input 
@@ -56,8 +62,11 @@
                   </div>
                 </div>
               </div>
+              <div class="flex justify-end">
+              <button @click="removeYearSection(index)" type="button" class="btn btn-error mt-3">Remove</button>
+              </div>
             </div>
-            <button @click="addYearSection" type="button" class="btn btn-secondary mt-4">Add Year & Section</button>
+            <button @click="addYearSection" type="button" class="btn btn-primary mt-4">Add Year & Section</button>
           </div>
 
           <div class="mt-6 flex justify-end space-x-4">
@@ -92,11 +101,10 @@ const newTeacher = ref({
   email: '',
   password: '',
   teacher_type: '',
-  subjects: []
 });
 
 // Store for handling multiple "Year & Section" with subjects
-const yearSections = ref([{ course_year_and_section: '', subjects: [] }]);
+const yearSections = ref([{ course: '', year_and_section: '', subjects: [] }]);
 const searchQueries = ref(['']);
 const message = ref('');
 const error = ref('');
@@ -116,7 +124,7 @@ onMounted(async () => {
 
 // Add new "Year & Section"
 const addYearSection = () => {
-  yearSections.value.push({ course_year_and_section: '', subjects: [] });
+  yearSections.value.push({ course: '', year_and_section: '', subjects: [] });
   searchQueries.value.push('');
 };
 
@@ -141,6 +149,7 @@ const handleAddTeacher = async () => {
       ...newTeacher.value,
       yearSectionSubjects: yearSections.value
     };
+    console.log(formattedData)
 
     await teacherStore.addTeacher(formattedData); // Send data to store
     message.value = 'Teacher added successfully!';
@@ -167,9 +176,8 @@ const resetForm = () => {
     email: '',
     password: '',
     teacher_type: '',
-    subjects: []
   };
-  yearSections.value = [{ course_year_and_section: '', subjects: [] }];
+  yearSections.value = [{ course: '', year_and_section: '', subjects: [] }];
   searchQueries.value = [''];
 };
 
