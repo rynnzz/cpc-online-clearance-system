@@ -25,7 +25,7 @@
 
           <div class="space-y-6 mt-6">
             <h3 class="font-semibold text-primary">Sections and Subjects</h3>
-            <div v-for="(yearSection, index) in currentTeacher.yearSections" :key="index" class="mb-4 p-4 border border-base-500 rounded-md">
+            <div v-for="(yearSection, index) in currentTeacher.yearSectionSubjects" :key="index" class="mb-4 p-4 border border-base-500 rounded-md">
               <select v-model="yearSection.course" class="input input-bordered w-auto mb-2" required>
                 <option value="" disabled>Select Course</option>
                 <option value="BSIT">BSIT</option>
@@ -52,7 +52,7 @@
                   <input 
                     type="checkbox" 
                     class="checkbox checkbox-primary" 
-                    :value="subject.id" 
+                    :value="subject.name" 
                     v-model="yearSection.subjects" 
                   />
                   <label class="ml-2 text-gray-300 text-sm">{{ subject.name }}</label>
@@ -97,7 +97,7 @@ const currentTeacher = ref({
   email: '',
   password: '',
   teacher_type: '',
-  yearSections: [],
+  yearSectionSubjects: {},
 });
 
 const searchQueries = ref([]);
@@ -114,9 +114,9 @@ watch(() => props.teacher, (newTeacher) => {
   if (newTeacher) {
     currentTeacher.value = {
       ...newTeacher,
-      yearSections: Array.isArray(newTeacher.yearSections) ? newTeacher.yearSections : []
+      yearSectionSubjects: Array.isArray(newTeacher.yearSectionSubjects) ? newTeacher.yearSectionSubjects : []
     };
-    searchQueries.value = currentTeacher.value.yearSections.map(() => ''); // Initialize search queries
+    searchQueries.value = currentTeacher.value.yearSectionSubjects.map(() => ''); // Initialize search queries
     console.log('Current Teacher Data:', currentTeacher.value); // Debugging line
   } else {
     resetForm(); // Reset form if no teacher data
@@ -145,16 +145,16 @@ const handleEditTeacher = async () => {
 
 // Add a new Year & Section
 const addYearSection = () => {
-  currentTeacher.value.yearSections.push({ course: '', year_and_section: '', subjects: [] });
+  currentTeacher.value.yearSectionSubjects.push({ course: '', year_and_section: '', subjects: [] });
   searchQueries.value.push('');
-  console.log('Year Sections after adding:', currentTeacher.value.yearSections); // Debugging line
+  console.log('Year Sections after adding:', currentTeacher.value.yearSectionSubjects); // Debugging line
 };
 
 // Remove a Year & Section
 const removeYearSection = (index) => {
-  currentTeacher.value.yearSections.splice(index, 1);
+  currentTeacher.value.yearSectionSubjects.splice(index, 1);
   searchQueries.value.splice(index, 1);
-  console.log('Year Sections after removing:', currentTeacher.value.yearSections); // Debugging line
+  console.log('Year Sections after removing:', currentTeacher.value.yearSectionSubjects); // Debugging line
 };
 
 // Filter subjects based on search query
@@ -173,7 +173,7 @@ const resetForm = () => {
     email: '',
     password: '',
     teacher_type: '',
-    yearSections: [] // Reset to empty array
+    yearSectionSubjects: {} // Reset to empty array
   };
   searchQueries.value = [];
 };
