@@ -25,11 +25,11 @@
         </li>
 
         <li 
-          :class="['flex items-center px-6 py-3 hover:bg-gray-700 cursor-pointer text-lg', { 'bg-gray-600': activeItem === 'students-status' }]"
-          @click="navigateTo('students-status')"
+          :class="['flex items-center px-6 py-3 hover:bg-gray-700 cursor-pointer text-lg', { 'bg-gray-600': activeItem === 'manage-subjects' }]"
+          @click="navigateTo('manage-subjects')"
         >
-          <i class="fas fa-user-graduate mr-3"></i> 
-          <span v-if="isOpen">Students Status</span>
+        <i class="fa-solid fa-book mr-3"></i>
+          <span v-if="isOpen">Manage Subjects</span>
         </li>
 
         <!-- Separator -->
@@ -145,7 +145,7 @@ const navigateTo = (item) => {
   const routes = {
     'dashboard': '/dashboard',
     'approve-requests': '/approve-requests',
-    'students-status': '/students-status',
+    'manage-subjects': '/manage-subjects',
     'teacher-accounts': '/manage-teacher-accounts',
     'student-accounts': '/manage-student-accounts',
     'approve-clearance': '/approve-clearance',
@@ -169,7 +169,7 @@ watch(
     const pathToActiveItem = {
       '/dashboard': 'dashboard',
       '/approve-requests': 'approve-requests',
-      '/students-status': 'students-status',
+      '/manage-subjects': 'manage-subjects',
       '/manage-teacher-accounts': 'teacher-accounts',
       '/manage-student-accounts': 'student-accounts',
       '/approve-clearance': 'approve-clearance',
@@ -188,7 +188,7 @@ onMounted(() => {
   const pathToActiveItem = {
     '/dashboard': 'dashboard',
     '/approve-requests': 'approve-requests',
-    '/students-status': 'students-status',
+    '/manage-subjects': 'manage-subjects',
     '/manage-teacher-accounts': 'teacher-accounts',
     '/manage-student-accounts': 'student-accounts',
     '/approve-clearance': 'approve-clearance',
