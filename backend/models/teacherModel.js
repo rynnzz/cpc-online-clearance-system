@@ -166,10 +166,6 @@ exports.addTeacher = async (teacher) => {
     }
 };
 
-
-
-
-
 // Update a teacher by ID
 exports.updateTeacher = async (id, teacher) => {
     const {
@@ -323,6 +319,7 @@ exports.updateTeacher = async (id, teacher) => {
     }
 };
 
+
 // Delete a teacher by ID
 exports.deleteTeacher = (id) => {
     return db.execute(`
@@ -330,3 +327,22 @@ exports.deleteTeacher = (id) => {
         WHERE teacher_id = ?
     `, [id]);
 };
+
+// Delete teacher section and associated subjects
+exports.deleteTeacherSection = async (req, res) => {
+    const sectionId = req.params.id;
+  
+    try {
+      // Start by deleting all associated subjects for the given section
+      await db.execute('DELETE FROM teacher_subjects WHERE section_id = ?', [sectionId]);
+  
+      // Then, delete the section itself
+      await db.execute('DELETE FROM teacher_sections WHERE id = ?', [sectionId]);
+  
+      res.json({ message: 'Year Section and associated subjects deleted successfully' });
+    } catch (error) {
+      console.error('Error deleting section and subjects:', error);
+      res.status(500).json({ message: 'Error deleting section and subjects' });
+    }
+  };
+  

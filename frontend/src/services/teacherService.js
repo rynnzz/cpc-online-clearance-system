@@ -22,4 +22,9 @@ export default {
   deleteTeacher(id) {
     return axios.delete(`${API_URL}/${id}`);
   },
+
+  deleteYearSection(sectionId) {
+  return axios.delete(`${API_URL}/${sectionId}`)
+  }
+  
 }

@@ -56,6 +56,18 @@ exports.deleteTeacher = async (req, res) => {
     }
 };
 
+exports.deleteTeacherSection = async (req, res) => {
+    const sectionId = req.params.id;
+  
+    try {
+      await teacherModel.deleteSection(sectionId);
+      res.json({ message: 'Year Section deleted successfully' });
+    } catch (error) {
+      console.error('Error deleting section:', error);
+      res.status(500).json({ message: 'Error deleting section' });
+    }
+  };
+
 exports.getTeacherSubjects = async (req, res) => {
     const { teacherId } = req.params;
     if (!teacherId) {

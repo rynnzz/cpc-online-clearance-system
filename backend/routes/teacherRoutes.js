@@ -19,4 +19,6 @@ router.delete('/:id', teacherController.deleteTeacher);
 // Route to get subjects handled by a specific teacher
 router.get('/:teacherId/subjects', teacherController.getTeacherSubjects);
 
+router.delete('/:id', teacherController.deleteTeacherSection);
+
 module.exports = router;

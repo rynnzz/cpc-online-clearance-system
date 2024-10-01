@@ -79,6 +79,19 @@ export const useTeacherStore = defineStore('teacherStore', {
       }
     },
 
+    async deleteTeacherSection(sectionId) {
+      this.loading = true;
+      try {
+        await teacherService.deleteTeacherSection(sectionId)
+        this.message = 'Year Section removed successfully';
+      } catch (error) {
+        this.error = 'Failed to remove Year Section';
+        console.error(error);
+      } finally {
+        this.loading = false;
+      }
+    },
+
     nextPage() {
       if (this.currentPage < this.totalPages) {
         this.currentPage++;

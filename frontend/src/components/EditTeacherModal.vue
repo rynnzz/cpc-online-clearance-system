@@ -53,7 +53,8 @@
                     type="checkbox" 
                     class="checkbox checkbox-primary" 
                     :value="subject.name" 
-                    v-model="yearSection.subjects" 
+                    :checked="isSubjectChecked(yearSection, subject.name)" 
+                    @change="toggleSubjectSelection(yearSection, subject.name)"
                   />
                   <label class="ml-2 text-gray-300 text-sm">{{ subject.name }}</label>
                 </div>
@@ -80,6 +81,7 @@
 
 <script setup>
 import { ref, watch, computed } from 'vue';
+import axios from 'axios'; // Import axios for API calls
 import { useTeacherStore } from '@/stores/teacherStore';
 import { useSubjectStore } from '@/stores/subjectStore';
 
@@ -97,7 +99,7 @@ const currentTeacher = ref({
   email: '',
   password: '',
   teacher_type: '',
-  yearSectionSubjects: {},
+  yearSectionSubjects: []
 });
 
 const searchQueries = ref([]);
@@ -117,7 +119,6 @@ watch(() => props.teacher, (newTeacher) => {
       yearSectionSubjects: Array.isArray(newTeacher.yearSectionSubjects) ? newTeacher.yearSectionSubjects : []
     };
     searchQueries.value = currentTeacher.value.yearSectionSubjects.map(() => ''); // Initialize search queries
-    console.log('Current Teacher Data:', currentTeacher.value); // Debugging line
   } else {
     resetForm(); // Reset form if no teacher data
   }
@@ -127,7 +128,8 @@ watch(() => props.teacher, (newTeacher) => {
 const handleEditTeacher = async () => {
   loading.value = true; // Start loading
   try {
-    await teacherStore.updateTeacher(currentTeacher.value); // Update the teacher
+    // Update the teacher and the year section subjects
+    await teacherStore.updateTeacher(currentTeacher.value); 
     message.value = 'Teacher updated successfully!';
     resetForm(); // Reset form after submission
     props.closeModal(); // Close modal on success
@@ -147,14 +149,22 @@ const handleEditTeacher = async () => {
 const addYearSection = () => {
   currentTeacher.value.yearSectionSubjects.push({ course: '', year_and_section: '', subjects: [] });
   searchQueries.value.push('');
-  console.log('Year Sections after adding:', currentTeacher.value.yearSectionSubjects); // Debugging line
 };
 
 // Remove a Year & Section
-const removeYearSection = (index) => {
+const removeYearSection = async (index) => {
+  const yearSection = currentTeacher.value.yearSectionSubjects[index];
+  
+  if (yearSection && yearSection.id) {
+    try {
+      await axios.delete(`/api/teacher-sections/${yearSection.id}`);
+    } catch (err) {
+      console.error('Error deleting year section:', err);
+    }
+  }
+
   currentTeacher.value.yearSectionSubjects.splice(index, 1);
   searchQueries.value.splice(index, 1);
-  console.log('Year Sections after removing:', currentTeacher.value.yearSectionSubjects); // Debugging line
 };
 
 // Filter subjects based on search query
@@ -162,6 +172,21 @@ const filteredSubjects = (index) => {
   return subjects.value.filter(subject => 
     subject.name.toLowerCase().includes(searchQueries.value[index].toLowerCase())
   );
+};
+
+// Check if subject is selected in a year section
+const isSubjectChecked = (yearSection, subjectName) => {
+  return yearSection.subjects.includes(subjectName);
+};
+
+// Toggle subject selection for a year section
+const toggleSubjectSelection = (yearSection, subjectName) => {
+  const subjectIndex = yearSection.subjects.indexOf(subjectName);
+  if (subjectIndex === -1) {
+    yearSection.subjects.push(subjectName);
+  } else {
+    yearSection.subjects.splice(subjectIndex, 1);
+  }
 };
 
 // Reset form to default values
@@ -173,7 +198,7 @@ const resetForm = () => {
     email: '',
     password: '',
     teacher_type: '',
-    yearSectionSubjects: {} // Reset to empty array
+    yearSectionSubjects: [] // Reset to an empty array
   };
   searchQueries.value = [];
 };
