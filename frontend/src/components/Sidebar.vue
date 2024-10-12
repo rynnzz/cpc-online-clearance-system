@@ -197,7 +197,6 @@ onMounted(() => {
     '/upload-document': 'upload-document',
   };
   activeItem.value = pathToActiveItem[route.path] || 'dashboard';
-  authStore.initializeStore();
 });
 </script>
 

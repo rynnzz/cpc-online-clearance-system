@@ -23,6 +23,10 @@ export default {
     return axios.delete(`${API_URL}/${id}`);
   },
 
+  addYearSection(id, sections) {
+    return axios.post(`${API_URL}/${id}/year-sections`, sections);
+  },
+
   deleteYearSection(sectionId) {
   return axios.delete(`${API_URL}/${sectionId}`)
   }

@@ -10,6 +10,8 @@ router.get('/', teacherController.getAllTeachers);
 // Route to add a new teacher
 router.post('/', teacherController.addTeacher);
 
+router.post('/:id/year-sections', teacherController.addYearSection);
+
 // Route to update a teacher
 router.put('/:id', teacherController.updateTeacher);
 

@@ -77,6 +77,7 @@ const handleLogin = async () => {
   loading.value = true; // Set loading to true when login starts
   try {
     await authStore.login({ email: email.value, password: password.value });
+    console.log('Login successful, redirecting...')
 
     // Simulate a delay of 2 seconds before redirecting
     setTimeout(() => {

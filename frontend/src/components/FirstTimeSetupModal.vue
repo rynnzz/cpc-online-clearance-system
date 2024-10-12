@@ -53,42 +53,43 @@
             <button type="button" class="btn btn-secondary" @click="addSection">Add Another Section</button>
           </div>
 
-          <!-- Signature Pad -->
-          <div class="mb-6">
-            <label class="block text-sm font-bold mb-2">Draw Your Signature:</label>
-            <div ref="signaturePadContainer" class="signature-pad-container mb-4">
-              <canvas ref="canvasRef" width="400" height="200"></canvas>
-            </div>
-            <button type="button" @click="clearSignature" class="btn btn-secondary mb-4">Clear Signature</button>
-          </div>
-
           <div class="flex justify-end">
             <button type="submit" class="btn btn-primary">Complete Setup</button>
           </div>
+          
         </form>
+        <div class="flex justify-end">
+            <button @click="closeModal" class="btn btn-secondary">Close</button>
+          </div>
       </div>
     </div>
   </transition>
 </template>
 
 <script setup>
-import { ref, nextTick, watch } from 'vue';
-import SignaturePad from 'signature_pad';
+import { ref, computed, onMounted } from 'vue';
 import { useTeacherStore } from '@/stores/teacherStore';
+import { useSubjectStore } from '@/stores/subjectStore';
 
 const props = defineProps({
   isOpen: Boolean,
   closeModal: Function,
 });
 
-// Available subjects (can be fetched from the backend as well)
-const availableSubjects = ref([
-  { id: 1, name: 'System Administration' },
-  { id: 2, name: 'Advanced Mathematics' },
-  { id: 3, name: 'Programming Basics' }
-]);
+const subjectStore = useSubjectStore();
+
+onMounted(async () => {
+  try {
+    await subjectStore.getAllSubjects(); // Fetch subjects on modal mount
+  } catch (err) {
+    console.error('Error fetching subjects:', err);
+  }
+});
+
+const availableSubjects = computed(() => subjectStore.subjects);
 
 const teacherStore = useTeacherStore();
+
 const setupData = ref({
   sections: [
     {
@@ -97,35 +98,7 @@ const setupData = ref({
       subjects: []
     }
   ],
-  signature: null
 });
-
-// Canvas and SignaturePad references
-const canvasRef = ref(null);
-const signaturePad = ref(null);
-
-// Initialize SignaturePad when the modal opens, ensuring canvas is rendered
-watch(
-  () => props.isOpen,
-  async (newVal) => {
-    if (newVal) {
-      await nextTick(); // Wait for DOM update, ensuring canvas is available
-      if (canvasRef.value) {
-        signaturePad.value = new SignaturePad(canvasRef.value.getContext('2d'), {
-          backgroundColor: 'rgb(255, 255, 255)', // Set canvas background to white
-          penColor: 'rgb(0, 0, 0)' // Set pen color to black
-        });
-      }
-    }
-  }
-);
-
-// Clear the signature pad
-const clearSignature = () => {
-  if (signaturePad.value) {
-    signaturePad.value.clear();
-  }
-};
 
 // Add a new section to the form
 const addSection = () => {
@@ -145,28 +118,25 @@ const removeSection = (index) => {
   }
 };
 
-// Submit the setup form
+// Submit form data
 const submitSetup = async () => {
-  if (signaturePad.value.isEmpty()) {
-    alert('Please provide a signature.');
-    return;
-  }
-
-  // Capture signature image as Base64
-  setupData.value.signature = signaturePad.value.toDataURL();
-
   try {
-    // Send setup data to the store (you might send it to the backend)
-    await teacherStore.completeFirstLoginSetup(setupData.value);
-    alert('Setup completed successfully!');
-    props.closeModal(); // Close modal
+    // Transform setupData for backend
+    const formattedData = setupData.value.sections.map(section => ({
+      course: section.course,
+      year_and_section: section.year_and_section,
+      subjects: section.subjects,
+    }));
+    
+    await teacherStore.addYearSection(formattedData);
+    console.log('Returned Data:', formattedData); // Log the formatted data
+    alert('Year and Section added successfully');
+    props.closeModal(); // Close modal after successful submission
   } catch (error) {
-    console.error('Error completing setup:', error);
-    alert('An error occurred. Please try again.');
+    console.error('Error submitting setup data:', error);
   }
 };
 </script>
-
 
 <style scoped>
 .signature-pad-container {

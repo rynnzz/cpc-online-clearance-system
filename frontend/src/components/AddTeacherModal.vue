@@ -149,7 +149,6 @@ const handleAddTeacher = async () => {
       ...newTeacher.value,
       yearSectionSubjects: yearSections.value
     };
-    console.log(formattedData)
 
     await teacherStore.addTeacher(formattedData); // Send data to store
     message.value = 'Teacher added successfully!';

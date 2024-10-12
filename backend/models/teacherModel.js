@@ -105,12 +105,55 @@ exports.getAllTeachers = async (role, page = 1, limit = 50000) => {
     }
 };
 
+exports.addYearSection = async (section) => {
+    const { teacher_id, course, year_and_section, subjects } = section;
+
+    const connection = await db.getConnection(); // Start a connection for the transaction
+
+    try {
+        await connection.beginTransaction(); // Begin transaction
+
+        // Insert into teacher_sections and retrieve the section_id
+        const [result] = await connection.execute(
+            `INSERT INTO teacher_sections (teacher_id, course, year_and_section) VALUES (?, ?, ?)`,
+            [teacher_id, course, year_and_section]
+        );
+        const section_id = result.insertId; // Get the generated section_id
+
+        // Loop through subjects and insert into teacher_subjects
+        for (const subject of subjects) {
+            // Assuming `subject` is the subject name; get its `subject_id`
+            const [[subjectResult]] = await connection.execute(
+                `SELECT id FROM subjects WHERE name = ?`,
+                [subject]
+            );
+            const subject_id = subjectResult.id;
+
+            // Insert into teacher_subjects
+            await connection.execute(
+                `INSERT INTO teacher_subjects (teacher_id, section_id, subject_id) VALUES (?, ?, ?)`,
+                [teacher_id, section_id, subject_id]
+            );
+        }
+
+        await connection.commit(); // Commit the transaction if all inserts succeed
+    } 
+    catch (err) {
+        await connection.rollback(); // Rollback if there’s an error
+        console.error(`Error adding new year and section with subjects: ${err.message}`);
+        throw new Error(`Error adding new year and section with subjects: ${err.message}`);
+    } 
+    finally {
+        connection.release(); // Release the connection back to the pool
+    }
+};
+
 
 
 
 // Add a new teacher
 exports.addTeacher = async (teacher) => {
-    const { first_name, middle_name, last_name, email, password, teacher_type, yearSectionSubjects } = teacher;
+    const { first_name, middle_name, last_name, email, password, teacher_type } = teacher;
 
     try {
         // Hash the password
@@ -130,41 +173,13 @@ exports.addTeacher = async (teacher) => {
             VALUES (?, ?)
         `, [userId, teacher_type]);
 
-        // Insert each year & section along with the subjects they handle
-        for (const yearSection of yearSectionSubjects) {
-            const { course, year_and_section, subjects } = yearSection;
-
-            // Insert into teacher_sections table
-            const [sectionResult] = await db.execute(`
-                INSERT INTO teacher_sections (teacher_id, course, year_and_section)
-                VALUES (?, ?, ?)
-            `, [userId, course, year_and_section]);
-
-            const sectionId = sectionResult.insertId; // Get the inserted section_id
-
-            // Check if subjects exist before insertion
-            if (Array.isArray(subjects) && subjects.length > 0) {
-                for (const subjectId of subjects) {
-                    try {
-                        await db.execute(`
-                            INSERT INTO teacher_subjects (teacher_id, section_id, subject_id)
-                            VALUES (?, ?, ?)
-                        `, [userId, sectionId, subjectId]);
-                    } catch (insertError) {
-                        console.error(`Error inserting subject for teacher_id ${userId}, section_id ${sectionId}: ${insertError.message}`);
-                    }
-                }
-            } else {
-                console.warn(`No subjects found for year & section: ${course, year_and_section}`);
-            }
-        }
-
         return { message: 'Teacher account added successfully' };
     } catch (err) {
         console.error(`Error adding teacher account: ${err.message}`);
         throw new Error(`Error adding teacher account: ${err.message}`);
     }
 };
+
 
 // Update a teacher by ID
 exports.updateTeacher = async (id, teacher) => {
@@ -215,12 +230,12 @@ exports.updateTeacher = async (id, teacher) => {
 
         // Fetch existing sections and subjects for the teacher
         const [existingSections] = await db.execute(`
-            SELECT ts.id AS section_id, ts.course, ts.year_and_section, 
+            SELECT ts.section_id AS section_id, ts.course, ts.year_and_section, 
                    GROUP_CONCAT(tsub.subject_id) AS subjects
             FROM teacher_sections ts
-            LEFT JOIN teacher_subjects tsub ON ts.id = tsub.section_id
+            LEFT JOIN teacher_subjects tsub ON ts.section_id = tsub.section_id
             WHERE ts.teacher_id = ?
-            GROUP BY ts.id
+            GROUP BY ts.section_id
         `, [id]);
 
         const existingSectionsMap = existingSections.reduce((map, section) => {
@@ -308,7 +323,7 @@ exports.updateTeacher = async (id, teacher) => {
         if (remainingSectionIds.length > 0) {
             const deletePlaceholders = remainingSectionIds.map(() => '?').join(',');
             await db.execute(`
-                DELETE FROM teacher_sections WHERE id IN (${deletePlaceholders})
+                DELETE FROM teacher_sections WHERE section_id IN (${deletePlaceholders})
             `, remainingSectionIds);
         }
 

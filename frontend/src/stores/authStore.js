@@ -1,56 +1,68 @@
 import { defineStore } from 'pinia';
-import { login as loginService, fetchUserInfo } from '../services/authServices'; // Update the path as needed
+import { login as loginService } from '../services/authServices'; 
+import { decodeJwt } from 'jose';
+
 
 export const useAuthStore = defineStore('auth', {
   state: () => ({
-    userRole: null,
-    token: null,
+    userTokenId: null,   // Stores the user ID
+    token: null,    // Stores the JWT token in memory
+    isFirstLogin: false
   }),
+
+  getters: {
+    // Getter to decode and access the role from the token
+    userRole(state) {
+      if (state.token) {
+        const decodedToken = decodeJwt(state.token);
+        return decodedToken.role;
+      }
+      return null;
+    },
+    userId(state) {
+      if (state.token) {
+        const decodedToken = decodeJwt(state.token);
+        return decodedToken.id;
+    }
+    return null;
+  },
+},
+
   actions: {
     async login(userData) {
       try {
         const response = await loginService(userData);
         if (response && response.token) {
           this.token = response.token;
-
-          // Fetch user role from the server using the token
-          const userInfo = await fetchUserInfo(this.token);
-          this.userRole = userInfo.role;
-
-          // Store in localStorage
+          this.isFirstLogin = response.data.isFirstLogin || false;
           localStorage.setItem('token', this.token);
-          localStorage.setItem('userRole', this.userRole);
+          
         } else {
           throw new Error('Invalid response structure');
         }
       } catch (error) {
         console.error('Login failed', error);
-        throw error; // Rethrow error to handle it in the component
+        throw error;
       }
     },
     
     async logout() {
-      this.userRole = null;
+      this.userTokenId = null;
       this.token = null;
-      localStorage.removeItem('userRole');
       localStorage.removeItem('token');
     },
 
-    async initializeStore() {
-      const role = localStorage.getItem('userRole');
+    initializeAuth() {
       const token = localStorage.getItem('token');
       if (token) {
-        this.token = token;
         try {
-          // Fetch user info to validate role
-          const userInfo = await fetchUserInfo(token);
-          this.userRole = userInfo.role;
+          const decoded = decodeJwt(token);
+          this.token = token;
+          this.user = decoded;
         } catch (error) {
-          console.error('Failed to fetch user info during initialization', error);
-          this.logout(); // Optionally handle error by logging out
+          console.error('Failed to decode token:', error);
+          this.logout();
         }
-      } else if (role) {
-        this.userRole = role;
       }
     },
   },
