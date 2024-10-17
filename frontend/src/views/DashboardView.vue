@@ -17,16 +17,15 @@
       import { ref, computed } from 'vue';
       import FirstTimeSetupModal from '@/components/FirstTimeSetupModal.vue';
       import { useAuthStore } from '@/stores/authStore'
-      
-      const isFirstTimeModalOpen = ref(true);
 
-      const firstTimeModalClose = () => {
-        isFirstTimeModalOpen.value = false;
-      };
-      
       const authStore = useAuthStore();
-      
+      const isFirstTimeModalOpen = ref(!authStore.first_login);
       const userRole = computed(() => authStore.userRole);
+
+      const firstTimeModalClose = async () => {
+  isFirstTimeModalOpen.value = false;
+  authStore.markSetupComplete(); // Mark setup as complete in the store
+};
       
   
       </script>

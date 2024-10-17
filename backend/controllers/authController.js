@@ -24,18 +24,23 @@ exports.login = async (req, res) => {
 
         // Create JWT token with user ID and role
         const token = jwt.sign(
-            { id: user[0].id, role: user[0].role },
+            { id: user[0].id, role: user[0].role, firstLogin: user[0].first_login },
             process.env.JWT_SECRET,
             { expiresIn: '1h' }
         );
 
-        console.log('Login response:', { token, role: user[0].role, id: user[0].id});
-        return res.json({ token, role: user[0].role });
+        console.log('Login response:', { token, role: user[0].role, id: user[0].id, firstLogin: user[0].first_login});
+        return res.json({ 
+          token,
+          role: user[0].role, 
+          firstLogin: user[0].first_login
+         });
     } catch (error) {
         console.error('Server error:', error);
         return res.status(500).json({ message: 'Server error' });
     }
 };
+
 
 exports.getUserInfo = async (req, res) => {
     try {

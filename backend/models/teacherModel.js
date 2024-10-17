@@ -134,6 +134,10 @@ exports.addYearSection = async (section) => {
                 `INSERT INTO teacher_subjects (teacher_id, section_id, subject_id) VALUES (?, ?, ?)`,
                 [teacher_id, section_id, subject_id]
             );
+            await connection.execute(
+                `UPDATE users SET first_login = TRUE WHERE id = ?`,
+                [teacher_id]
+              );
         }
 
         await connection.commit(); // Commit the transaction if all inserts succeed

@@ -7,7 +7,6 @@ export const useAuthStore = defineStore('auth', {
   state: () => ({
     userTokenId: null,   // Stores the user ID
     token: null,    // Stores the JWT token in memory
-    isFirstLogin: false
   }),
 
   getters: {
@@ -34,7 +33,6 @@ export const useAuthStore = defineStore('auth', {
         const response = await loginService(userData);
         if (response && response.token) {
           this.token = response.token;
-          this.isFirstLogin = response.data.isFirstLogin || false;
           localStorage.setItem('token', this.token);
           
         } else {

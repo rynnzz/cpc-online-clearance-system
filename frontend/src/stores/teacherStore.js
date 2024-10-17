@@ -121,6 +121,7 @@ export const useTeacherStore = defineStore('teacherStore', {
         console.error("Failed to add Year and Section:", error);
       }
     },
+
     
 
     async deleteTeacherSection(sectionId) {
