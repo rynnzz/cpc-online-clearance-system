@@ -105,8 +105,9 @@ exports.getAllTeachers = async (role, page = 1, limit = 50000) => {
     }
 };
 
-exports.addYearSection = async (section) => {
-    const { teacher_id, course, year_and_section, subjects } = section;
+// Model: Handle insertion of sections and updating signature
+exports.addYearSection = async (data) => {
+    const { teacher_id, course, year_and_section, subjects, signature } = data;
 
     const connection = await db.getConnection(); // Start a connection for the transaction
 
@@ -120,9 +121,8 @@ exports.addYearSection = async (section) => {
         );
         const section_id = result.insertId; // Get the generated section_id
 
-        // Loop through subjects and insert into teacher_subjects
+        // Insert subjects for each section
         for (const subject of subjects) {
-            // Assuming `subject` is the subject name; get its `subject_id`
             const [[subjectResult]] = await connection.execute(
                 `SELECT id FROM subjects WHERE name = ?`,
                 [subject]
@@ -134,11 +134,19 @@ exports.addYearSection = async (section) => {
                 `INSERT INTO teacher_subjects (teacher_id, section_id, subject_id) VALUES (?, ?, ?)`,
                 [teacher_id, section_id, subject_id]
             );
-            await connection.execute(
-                `UPDATE users SET first_login = TRUE WHERE id = ?`,
-                [teacher_id]
-              );
         }
+
+        // Update the teacher's signature in teacher_details
+        await connection.execute(
+            `UPDATE teacher_details SET signature = ? WHERE teacher_id = ?`,
+            [signature, teacher_id]
+        );
+
+        // Update first_login to false after all subjects have been successfully inserted
+        await connection.execute(
+            `UPDATE users SET first_login = FALSE WHERE id = ?`,
+            [teacher_id]
+        );
 
         await connection.commit(); // Commit the transaction if all inserts succeed
     } 
@@ -151,7 +159,6 @@ exports.addYearSection = async (section) => {
         connection.release(); // Release the connection back to the pool
     }
 };
-
 
 
 

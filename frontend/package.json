@@ -14,9 +14,10 @@
     "jose": "^5.9.4",
     "jwt-decode": "^4.0.0",
     "pinia": "^2.1.7",
-    "signature_pad": "^5.0.3",
+    "signature_pad": "^5.0.4",
     "vue": "^3.4.29",
-    "vue-router": "^4.4.3"
+    "vue-router": "^4.4.3",
+    "vue-signature": "^2.6.0"
   },
   "devDependencies": {
     "@vitejs/plugin-vue": "^5.0.5",

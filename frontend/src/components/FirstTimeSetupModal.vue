@@ -1,66 +1,83 @@
 <template>
   <transition name="modal-fade" appear>
-    <div v-if="isOpen" class="fixed inset-0 bg-gray-800 bg-opacity-50 flex justify-center items-center overflow-y-auto">
-      <div class="bg-base-100 p-6 rounded-lg shadow-lg w-full max-w-6xl h-auto transform transition-transform duration-300 scale-95 overflow-y-auto">
-        <h2 class="text-2xl font-semibold mb-4 text-primary">First-Time Setup</h2>
+    <!-- Modal only shows if isOpen is true -->
+    <div v-if="isOpen" class="fixed inset-0 bg-black bg-opacity-80 backdrop-blur-sm flex justify-center items-start overflow-y-auto">
+      <div class="bg-gray-900 p-8 rounded-lg shadow-lg w-full max-w-4xl transform transition-transform duration-300 scale-95">
+        <!-- Modal Header -->
+        <div class="text-center mb-6">
+          <h2 class="text-3xl font-bold text-white">Welcome to the First-Time Setup!</h2>
+          <p class="text-lg text-gray-400 mt-2">Please complete this setup to get started.</p>
+        </div>
 
         <form @submit.prevent="submitSetup">
-          <!-- Loop over each section -->
-          <div v-for="(section, index) in setupData.sections" :key="index" class="mb-6 border p-4 rounded-md">
-            <!-- Course Selection -->
-            <div class="mb-4">
-              <label class="block text-sm font-bold mb-2">Select Course:</label>
-              <select v-model="section.course" class="input input-bordered w-full" required>
-                <option value="" disabled>Select Course</option>
-                <option value="BSIT">BSIT</option>
-                <option value="BSHM">BSHM</option>
-                <option value="BSED">BSED</option>
-                <option value="BEED">BEED</option>
-              </select>
-            </div>
+          <!-- Step 1: Select Course, Year and Section -->
+          <div class="mb-6">
+            <h3 class="text-xl font-semibold text-white">Step 1: Course Information</h3>
+            <!-- Loop over each section -->
+            <div v-for="(section, index) in setupData.sections" :key="index" class="mt-4 p-4 border border-gray-600 rounded-lg">
+              <!-- Course Selection -->
+              <div class="mb-4">
+                <label class="block text-sm font-bold text-gray-300 mb-2">Select Course:</label>
+                <select v-model="section.course" class="input input-bordered w-full p-2 bg-gray-800 text-white border border-gray-600 rounded-md" required>
+                  <option value="" disabled>Select Course</option>
+                  <option value="BSIT">BSIT</option>
+                  <option value="BSHM">BSHM</option>
+                  <option value="BSED">BSED</option>
+                  <option value="BEED">BEED</option>
+                </select>
+              </div>
 
-            <!-- Year and Section Input -->
-            <div class="mb-4">
-              <label class="block text-sm font-bold mb-2">Year and Section:</label>
-              <input
-                v-model="section.year_and_section"
-                type="text"
-                placeholder="Year and Section"
-                class="input input-bordered w-full"
-                required
-              />
-            </div>
+              <!-- Year and Section Input -->
+              <div class="mb-4">
+                <label class="block text-sm font-bold text-gray-300 mb-2">Year and Section:</label>
+                <input
+                  v-model="section.year_and_section"
+                  type="text"
+                  placeholder="Year and Section (Sample Format: 1A)"
+                  class="input input-bordered w-full p-2 bg-gray-800 text-white border border-gray-600 rounded-md"
+                  required
+                />
+              </div>
 
-            <!-- Subject Selection -->
-            <div class="mb-4">
-              <label class="block text-sm font-bold mb-2">Select Subjects:</label>
-              <div class="grid grid-cols-2 gap-4">
-                <div v-for="subject in availableSubjects" :key="subject.id" class="flex items-center">
-                  <input type="checkbox" :value="subject.name" v-model="section.subjects" />
-                  <label class="ml-2">{{ subject.name }}</label>
+              <!-- Subject Selection -->
+              <div class="mb-4">
+                <label class="block text-sm font-bold text-gray-300 mb-2">Select Subjects:</label>
+                <div class="grid grid-cols-2 gap-4">
+                  <div v-for="subject in availableSubjects" :key="subject.id" class="flex items-center">
+                    <input type="checkbox" :value="subject.name" v-model="section.subjects" />
+                    <label class="ml-2 text-gray-300">{{ subject.name }}</label>
+                  </div>
                 </div>
               </div>
-            </div>
 
-            <!-- Remove Section Button -->
-            <div class="flex justify-end">
-              <button type="button" class="btn btn-error" @click="removeSection(index)">Remove Section</button>
+              <!-- Remove Section Button -->
+              <div class="flex justify-end">
+                <button type="button" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-md" @click="removeSection(index)">Remove Section</button>
+              </div>
             </div>
           </div>
 
           <!-- Add New Section Button -->
           <div class="flex justify-start mb-6">
-            <button type="button" class="btn btn-secondary" @click="addSection">Add Another Section</button>
+            <button type="button" class="bg-purple-500 hover:bg-purple-600 text-white px-4 py-2 rounded-md" @click="addSection">Add Another Section</button>
           </div>
 
+          <!-- Step 2: Signature -->
+          <div class="mb-8">
+            <h3 class="text-xl font-semibold text-white">Step 2: Draw Your Signature</h3>
+            <div class="border-2 border-gray-300 rounded-lg p-4 bg-gray-800">
+              <!-- Vue Signature Component -->
+              <vue-signature ref="signaturePad" :options="signatureOptions" class="w-full h-80 bg-white border border-gray-600 rounded-md"></vue-signature>
+              <button type="button" class="mt-4 bg-pink-500 hover:bg-pink-600 text-white px-4 py-2 rounded-md" @click="clearSignature">Clear Signature</button>
+            </div>
+          </div>
+
+          <!-- Step 3: Complete Setup -->
           <div class="flex justify-end">
-            <button type="submit" class="btn btn-primary">Complete Setup</button>
+            <button type="submit" class="bg-green-500 hover:bg-green-600 text-white px-6 py-3 rounded-lg font-semibold text-lg">Complete Setup</button>
           </div>
           
         </form>
-        <div class="flex justify-end">
-            <button @click="closeModal" class="btn btn-secondary">Close</button>
-          </div>
       </div>
     </div>
   </transition>
@@ -70,24 +87,16 @@
 import { ref, computed, onMounted } from 'vue';
 import { useTeacherStore } from '@/stores/teacherStore';
 import { useSubjectStore } from '@/stores/subjectStore';
+import { useAuthStore } from '@/stores/authStore';
+import VueSignature from 'vue-signature'; // Import vue-signature component
 
 const props = defineProps({
   isOpen: Boolean,
   closeModal: Function,
 });
 
+const authStore = useAuthStore(); // Access authStore to check firstLogin
 const subjectStore = useSubjectStore();
-
-onMounted(async () => {
-  try {
-    await subjectStore.getAllSubjects(); // Fetch subjects on modal mount
-  } catch (err) {
-    console.error('Error fetching subjects:', err);
-  }
-});
-
-const availableSubjects = computed(() => subjectStore.subjects);
-
 const teacherStore = useTeacherStore();
 
 const setupData = ref({
@@ -99,6 +108,22 @@ const setupData = ref({
     }
   ],
 });
+
+const signatureOptions = ref({
+  penColor: 'black', // Customize pen color
+});
+
+const signaturePad = ref(null); // Define ref for signature pad
+
+onMounted(() => {
+  try {
+    subjectStore.getAllSubjects(); // Fetch subjects on modal mount
+  } catch (err) {
+    console.error('Error fetching subjects:', err);
+  }
+});
+
+const availableSubjects = computed(() => subjectStore.subjects);
 
 // Add a new section to the form
 const addSection = () => {
@@ -118,31 +143,47 @@ const removeSection = (index) => {
   }
 };
 
-// Submit form data
+// Clear signature pad
+const clearSignature = () => {
+  if (signaturePad.value) {
+    signaturePad.value.clear(); // Access the signature pad directly via the ref
+  }
+};
+
+// Submit form data including the signature
 const submitSetup = async () => {
   try {
-    // Transform setupData for backend
-    const formattedData = setupData.value.sections.map(section => ({
+    // Transform setupData for backend into an array of sections
+    const sections = setupData.value.sections.map(section => ({
       course: section.course,
       year_and_section: section.year_and_section,
       subjects: section.subjects,
     }));
-    
-    await teacherStore.addYearSection(formattedData);
-    console.log('Returned Data:', formattedData); // Log the formatted data
+
+    // Get signature data
+    const signature = signaturePad.value.save(); // Save signature as a data URL
+
+    // Prepare the payload with sections as an array and the signature
+    const payload = {
+      sections,  // Array of sections
+      signature  // Single signature for the form
+    };
+
+    // Send payload to teacherStore
+    await teacherStore.addYearSection(payload); // Pass payload to the backend
+
+    console.log('Payload Sent:', payload); // Log the payload being sent
+   
+
     alert('Year and Section added successfully');
     props.closeModal(); // Close modal after successful submission
   } catch (error) {
     console.error('Error submitting setup data:', error);
   }
 };
+
+
 </script>
 
 <style scoped>
-.signature-pad-container {
-  border: 1px solid #000;
-  width: 400px;
-  height: 200px;
-  background-color: white;
-}
 </style>

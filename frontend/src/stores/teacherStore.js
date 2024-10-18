@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia';
 import teacherService from '@/services/teacherService';
-import { decodeJwt } from 'jose';
+import { useAuthStore } from '@/stores/authStore';
 
 
 export const useTeacherStore = defineStore('teacherStore', {
@@ -81,48 +81,17 @@ export const useTeacherStore = defineStore('teacherStore', {
       }
     },
 
+
     async addYearSection(sections) {
       try {
-        // Get the token from the authStore or localStorage
-        const token = localStorage.getItem('token'); // Replace with authStore.token if using Pinia
-    
-        if (!token) {
-          console.error('No token found. Cannot add year and section.');
-          return;
-        }
-    
-        // Decode the token to get the teacherId
-        const decodedToken = decodeJwt(token);
-        const teacherId = decodedToken.id;
-    
-        // Refresh or populate `this.teachers` if necessary
-        if (!this.teachers || !this.teachers.some(t => t.id === teacherId)) {
-          console.log('Teacher list is empty or does not contain the teacher. Fetching teachers...');
-          await this.fetchTeachers(); // Ensure `fetchTeachers` fetches and populates `this.teachers`
-        }
-    
-        // Find the teacher in the local state by `teacherId`
-        const teacher = this.teachers.find(t => t.id === teacherId);
-        
-        if (!teacher) {
-          console.error(`Teacher with id ${teacherId} not found.`);
-          return;
-        }
-    
-        // Call the service with the found `teacherId` and sections
+        const authStore = useAuthStore();
+        const teacherId = authStore.userId; 
+
         await teacherService.addYearSection(teacherId, sections);
-        
-        // Update local state if necessary
-        const index = this.teachers.findIndex(t => t.id === teacherId);
-        if (index !== -1) {
-          this.teachers[index] = { ...this.teachers[index] };
-        }
       } catch (error) {
         console.error("Failed to add Year and Section:", error);
       }
     },
-
-    
 
     async deleteTeacherSection(sectionId) {
       this.loading = true;

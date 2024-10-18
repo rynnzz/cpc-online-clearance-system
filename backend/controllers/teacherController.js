@@ -28,38 +28,32 @@ exports.addTeacher = async (req, res) => {
     }
 };
 
+// Controller: Handling the payload (array of sections) and the signature
 exports.addYearSection = async (req, res) => {
-    console.log('Received data:', req.body); // This should log the array of sections
-    const sections = req.body;
+    console.log('Received data:', req.body); // Log the received data for debugging
+    const { sections, signature } = req.body; // Extract sections and signature from the payload
     const teacher_id = req.params.id;
 
-    // Check if sections is an array
+    // Validate the sections array
     if (!Array.isArray(sections) || sections.length === 0) {
         return res.status(400).json({ error: 'Invalid data format. Expected an array of sections.' });
     }
 
     try {
         for (const section of sections) {
-            // Validate the section structure
-            if (!section || typeof section !== 'object') {
-                throw new Error('Each item in sections array must be an object with course, year_and_section, and subjects.');
-            }
-
             const { course, year_and_section, subjects } = section;
 
-            // Validate each property
-            if (!course || !year_and_section || !Array.isArray(subjects) || subjects.length === 0) {
-                throw new Error('Invalid section format. Each section must have course, year_and_section, and a non-empty array of subjects.');
-            }
-
-            // Add teacher_id to each section object before passing it to the model
-            await teacherModel.addYearSection({ teacher_id, course, year_and_section, subjects });
+            // Call the model function to handle each section, including the signature
+            await teacherModel.addYearSection({ teacher_id, course, year_and_section, subjects, signature });
         }
+
         res.json({ message: 'Year and Sections added successfully' });
     } catch (err) {
+        console.error('Error:', err.message);
         res.status(500).json({ error: err.message });
     }
 };
+
 
 
 // Update a teacher                                                                     
