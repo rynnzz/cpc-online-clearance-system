@@ -8,6 +8,10 @@ export default {
     return axios.get(API_URL);
   },
 
+  getTeacherInfo(id) {
+    return axios.get(`${API_URL}/${id}`)
+  },
+
   // Add a new teacher
   addTeacher(teacher) {
     return axios.post(API_URL, teacher);

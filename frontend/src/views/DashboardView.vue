@@ -2,39 +2,54 @@
   <div>
     <h1>Welcome to the Dashboard!</h1>
 
-    <!-- First-Time Setup Modal -->
-    <FirstTimeSetupModal 
-      :isOpen="isFirstTimeModalOpen"
-      :closeModal="closeFirstTimeModal"
-      v-if="userRole === 'teacher' && isFirstTimeModalOpen"
+    <!-- First-Time Setup Modal for Teachers -->
+    <FirstTimeSetupTeacher 
+      :isOpen="isFirstTimeSetupTeacherOpen"
+      :closeModal="closeFirstTimeModalTeacher"  
+      v-if="userRole === 'teacher' && isFirstTimeSetupTeacherOpen"
+    />
+
+    <!-- First-Time Setup Modal for Students -->
+    <FirstTimeSetupStudent
+      :isOpen="isFirstTimeSetupStudentOpen"
+      :closeModal="closeFirstTimeModalStudent"
+      v-if="userRole === 'student' && isFirstTimeSetupStudentOpen"
     />
   </div>
 </template>
 
 <script setup>
 import { ref, computed, onMounted } from 'vue';
-import FirstTimeSetupModal from '@/components/FirstTimeSetupModal.vue';
+import FirstTimeSetupTeacher from '@/components/FirstTimeSetupTeacher.vue';
+import FirstTimeSetupStudent from '@/components/FirstTimeSetupStudent.vue';
 import { useAuthStore } from '@/stores/authStore';
 
-const authStore = useAuthStore();
+const authStore = useAuthStore(); // Access authStore to check firstLogin
 
-// Compute the user's role and firstLogin status from the authStore
+// Compute the user's role from the authStore
 const userRole = computed(() => authStore.userRole);
-const isFirstLogin = computed(() => authStore.isFirstLogin);
 
 // Modal open state based on firstLogin status
-const isFirstTimeModalOpen = ref(false);
+const isFirstTimeSetupTeacherOpen = ref(false);
+const isFirstTimeSetupStudentOpen = ref(false);
 
-// On component mount, initialize auth and check if modal needs to be opened
+// On component mount, check if the modal should be opened based on localStorage and user role
 onMounted(() => {
-  authStore.initializeAuth(); // Load token and user data from localStorage
-  if (userRole.value === 'teacher' && isFirstLogin.value) {
-    isFirstTimeModalOpen.value = true; // Open modal if it's the first login
+  const storedFirstLogin = localStorage.getItem('isFirstLogin')
+  if (userRole.value === 'teacher' && storedFirstLogin === '1') {
+    isFirstTimeSetupTeacherOpen.value = true;
+  } else if (userRole.value === 'student' && storedFirstLogin === '1') {
+    isFirstTimeSetupStudentOpen.value = true;
   }
 });
 
-// Close modal and update firstLogin status
-const closeFirstTimeModal = async () => {
-  isFirstTimeModalOpen.value = false;
+// Close the teacher setup modal
+const closeFirstTimeModalTeacher = () => {
+  isFirstTimeSetupTeacherOpen.value = false;
+};
+
+// Close the student setup modal
+const closeFirstTimeModalStudent = () => {
+  isFirstTimeSetupStudentOpen.value = false;
 };
 </script>

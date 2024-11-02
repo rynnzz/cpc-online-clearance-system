@@ -105,6 +105,27 @@ exports.getAllTeachers = async (role, page = 1, limit = 50000) => {
     }
 };
 
+exports.getTeacherInfo = async (id) => {
+    return db.execute(`
+        SELECT u.id AS teacher_id, 
+                u.first_name, 
+                u.middle_name, 
+                u.last_name, 
+                u.email, 
+                u.role, 
+                td.teacher_type,
+                ts.course,
+                ts.year_and_section,
+                s.name AS subject_name
+            FROM users u
+            JOIN teacher_details td ON u.id = td.teacher_id
+            LEFT JOIN teacher_subjects tsub ON tsub.teacher_id = u.id
+            LEFT JOIN subjects s ON s.id = tsub.subject_id
+            LEFT JOIN teacher_sections ts ON ts.teacher_id = u.id
+            WHERE u.role = 'teacher' AND u.id = ?`, [id]);
+}
+
+
 // Model: Handle insertion of sections and updating signature
 exports.addYearSection = async (data) => {
     const { teacher_id, course, year_and_section, subjects, signature } = data;
@@ -347,10 +368,17 @@ exports.updateTeacher = async (id, teacher) => {
 
 
 // Delete a teacher by ID
-exports.deleteTeacher = (id) => {
-    return db.execute(`
+exports.deleteTeacher = async (id) => {
+    // First, delete from teacher_details
+    await db.execute(`
         DELETE FROM teacher_details 
         WHERE teacher_id = ?
+    `, [id]);
+
+    // Then delete from users table
+    await db.execute(`
+        DELETE FROM users
+        WHERE id = ?
     `, [id]);
 };
 

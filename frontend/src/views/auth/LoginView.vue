@@ -1,14 +1,14 @@
 <template>
-  <div class="min-h-screen bg-cover bg-center flex items-center justify-center" style="background-image: url('/src/assets/login-background.png');">
-    <div class="bg-white p-8 rounded-lg shadow-lg w-full max-w-sm">
-      <h2 class="text-2xl font-bold mb-6 text-center text-gray-800">Welcome!</h2>
+  <div class="min-h-screen bg-cover bg-base-400 bg-center flex items-center justify-center">
+    <div class="bg-base-100 p-8 rounded-lg shadow-lg w-full max-w-sm">
+      <h2 class="text-2xl font-bold mb-6 text-center text-white">Welcome!</h2>
       <form @submit.prevent="handleLogin">
         <!-- Email Input -->
         <div class="mb-4 relative">
           <input
             type="email"
             v-model="email"
-            class="input w-full text-black px-10 bg-gray-200 border focus:outline-none focus:ring focus:ring-blue-400"
+            class="input w-full text-white px-10 bg-gray-700 border focus:outline-none focus:ring focus:ring-blue-400"
             placeholder="Email"
             required
           />
@@ -21,7 +21,7 @@
           <input
             :type="passwordVisible ? 'text' : 'password'"
             v-model="password"
-            class="input w-full text-black px-10 bg-gray-200 border focus:outline-none focus:ring focus:ring-blue-400"
+            class="input w-full text-white px-10 bg-gray-700 border focus:outline-none focus:ring focus:ring-blue-400"
             placeholder="Password"
             required
           />
@@ -49,7 +49,7 @@
         </button>
       </form>
       <div class="text-center mt-4">
-        <a href="#" class="text-blue-500 hover:underline">Forgot Password? Click Here!</a>
+        <span class="text-blue-500">Forgot Password? <a href="#" class="cursor-pointer hover:underline">Click Here!</a></span>
       </div>
     </div>
   </div>

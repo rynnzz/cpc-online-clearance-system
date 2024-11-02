@@ -5,9 +5,9 @@ import { decodeJwt } from 'jose';
 export const useAuthStore = defineStore('auth', {
   state: () => ({
     userTokenId: null,   // Stores the user ID
-    token: null,         // Stores the JWT token in memory
-    firstLogin: false,   // Stores the firstLogin status
+    token: null,         // Stores the JWT token in memory  // Stores the firstLogin status
     role: null,          // Stores the role of the user
+    isFirstLogin: null
   }),
 
   getters: {
@@ -17,8 +17,8 @@ export const useAuthStore = defineStore('auth', {
     userId(state) {
       return state.userTokenId;
     },
-    isFirstLogin(state) {
-      return state.firstLogin;  // Return the firstLogin status
+    firstLogin(state) {
+      return state.isFirstLogin;
     }
   },
 
@@ -29,6 +29,7 @@ export const useAuthStore = defineStore('auth', {
         const response = await loginService(userData); // Login service returns the token and user info
         if (response && response.token) {
           // Store token in state
+
           this.token = response.token;
 
           // Decode the token to get user details
@@ -37,9 +38,10 @@ export const useAuthStore = defineStore('auth', {
           // Store decoded values in the state
           this.userTokenId = decoded.id;
           this.role = decoded.role;
-          this.firstLogin = decoded.firstLogin; // Capture firstLogin from the decoded token
+          this.isFirstLogin = decoded.isFirstLogin
 
           // Persist token in localStorage
+          localStorage.setItem('isFirstLogin', this.isFirstLogin)
           localStorage.setItem('token', this.token);
         } else {
           throw new Error('Invalid response structure');
@@ -54,10 +56,8 @@ export const useAuthStore = defineStore('auth', {
     async logout() {
       this.userTokenId = null;
       this.token = null;
-      this.firstLogin = false;  // Reset firstLogin status on logout
       this.role = null;
-
-      // Clear the token from localStorage
+      localStorage.removeItem('isFirstLogin')
       localStorage.removeItem('token');
     },
 
@@ -70,7 +70,7 @@ export const useAuthStore = defineStore('auth', {
           this.token = token;
           this.userTokenId = decoded.id;
           this.role = decoded.role;
-          this.firstLogin = decoded.firstLogin; // Fetch firstLogin from the decoded token
+          this.isFirstLogin = decoded.isFirstLogin
         } catch (error) {
           console.error('Failed to decode token:', error);
           this.logout(); // If decoding fails, log the user out

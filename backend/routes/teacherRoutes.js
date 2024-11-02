@@ -7,6 +7,8 @@ const teacherController = require('../controllers/teacherController');
 // Route to get all teachers
 router.get('/', teacherController.getAllTeachers);
 
+router.get('/:id', teacherController.getTeacherInfo)
+
 // Route to add a new teacher
 router.post('/', teacherController.addTeacher);
 
@@ -17,9 +19,6 @@ router.put('/:id', teacherController.updateTeacher);
 
 // Route to delete a teacher
 router.delete('/:id', teacherController.deleteTeacher);
-
-// Route to get subjects handled by a specific teacher
-router.get('/:teacherId/subjects', teacherController.getTeacherSubjects);
 
 router.delete('/:id', teacherController.deleteTeacherSection);
 

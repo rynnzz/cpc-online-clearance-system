@@ -9,6 +9,7 @@ export const useTeacherStore = defineStore('teacherStore', {
     isLoading: false,
     currentPage: 1,
     pageSize: 10, // Set your desired page size
+    currentTeacher: {}, 
   }),
 
   getters: {
@@ -50,6 +51,19 @@ export const useTeacherStore = defineStore('teacherStore', {
         this.isLoading = false;
       }
     },
+
+    async getTeacherInfo() {
+      try {
+        const authStore = useAuthStore();
+        const teacherId = authStore.userId;
+        const response = await teacherService.getTeacherInfo(teacherId); // Pass the extracted userId to the service
+
+        this.currentTeacher = response.data; // Store the teacher info in the currentTeacher state
+      } catch (error) {
+        console.error("Failed to get Teacher Info", error);
+      }
+    },
+    
 
     async addTeacher(teacher) {
       try {

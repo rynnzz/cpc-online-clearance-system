@@ -28,32 +28,19 @@ exports.login = async (req, res) => {
       const token = jwt.sign(
           { id: user[0].id, 
             role: user[0].role, 
-            firstLogin: user[0].first_login,
+            isFirstLogin: user[0].first_login,
           },
           process.env.JWT_SECRET,
           { expiresIn: '1h' }
       );
 
-      // Fetch teacher's sections using the userModel method
-      const [sections] = await User.findTeacherSections(user[0].id);
+      // const [sections] = await User.findTeacherSections(user[0].id);
 
-      // Fetch teacher's subjects using the userModel method
-      const [subjects] = await User.findTeacherSubjects(user[0].id);
+      // const [subjects] = await User.findTeacherSubjects(user[0].id);
 
       // Prepare the response object
-      const response = {
-          token,  // The JWT token
-          user: {
-              firstName: user[0].first_name,
-              middleName: user[0].middle_name,
-              lastName: user[0].last_name,
-              email: user[0].email,
-          },
-          sections,  // Array of sections the teacher handles
-          subjects   // Array of subjects the teacher handles
-      };
+      const response = { token }
 
-      // Send the response to the frontend
       return res.json(response);
   } catch (error) {
       console.error('Server error:', error);
@@ -74,6 +61,7 @@ exports.getUserInfo = async (req, res) => {
       // Send user details including role
       res.json({
         role: user[0].role,
+        firstLogin:user[0].first_login
         // Add other user details if needed
       });
     } catch (error) {

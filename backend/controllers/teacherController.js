@@ -16,6 +16,36 @@ exports.getAllTeachers = async (req, res) => {
     }
 };
 
+exports.getTeacherInfo = async (req, res) => {
+    try {
+        const id = req.params.id; // Get the id from the URL parameters
+        const [user] = await teacherModel.getTeacherInfo(id); // Fetch user info
+
+        if (user.length === 0) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        // Send user details including all relevant data
+        res.json({
+            teacherId: user[0].teacher_id,
+            firstName: user[0].first_name,
+            middleName: user[0].middle_name,
+            lastName: user[0].last_name,
+            email: user[0].email,
+            role: user[0].role,
+            teacherType: user[0].teacher_type,
+            subjects: user.map(item => ({
+                course: item.course,
+                yearAndSection: item.year_and_section,
+                subjectName: item.subject_name,
+            })),
+        });
+    } catch (error) {
+        console.error('Error fetching user info:', error);
+        res.status(500).json({ message: 'Server error' });
+    }
+};
+
 
 // Add a new teacher
 exports.addTeacher = async (req, res) => {
@@ -30,7 +60,6 @@ exports.addTeacher = async (req, res) => {
 
 // Controller: Handling the payload (array of sections) and the signature
 exports.addYearSection = async (req, res) => {
-    console.log('Received data:', req.body); // Log the received data for debugging
     const { sections, signature } = req.body; // Extract sections and signature from the payload
     const teacher_id = req.params.id;
 
@@ -53,8 +82,6 @@ exports.addYearSection = async (req, res) => {
         res.status(500).json({ error: err.message });
     }
 };
-
-
 
 // Update a teacher                                                                     
 exports.updateTeacher = async (req, res) => {

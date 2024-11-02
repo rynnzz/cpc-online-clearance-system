@@ -173,6 +173,7 @@ const submitSetup = async () => {
     await teacherStore.addYearSection(payload); // Pass payload to the backend
 
     console.log('Payload Sent:', payload); // Log the payload being sent
+    localStorage.setItem('isFirstLogin', '0');
    
 
     alert('Year and Section added successfully');
