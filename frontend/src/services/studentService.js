@@ -11,6 +11,10 @@ export default {
     return axios.post(API_URL, student);
   },
 
+  addSubject(id, payload) {
+    return axios.post(`${API_URL}/${id}/add-subject`, payload)
+  },
+
   updateStudent(id, student) {
     return axios.put(`${API_URL}/${id}`, student);
   },

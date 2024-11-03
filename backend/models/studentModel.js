@@ -52,6 +52,48 @@ exports.addStudent = async (student) => {
     }
 };
 
+exports.addSubject = async (id, payload) => {
+    const { subjects } = payload
+    const connection = await db.getConnection(); // Ensure a connection to the database
+
+    try {
+        await connection.beginTransaction(); // Start a transaction
+
+        for (const subject of subjects) {
+            const [[subjectResult]] = await connection.execute(
+                `SELECT id FROM subjects WHERE name = ?`,
+                [subject]
+            );
+
+            if (!subjectResult) {
+                throw new Error(`Subject ${subject} not found`);
+            }
+
+            const subject_id = subjectResult.id;
+
+            // Insert into student_subjects
+            await connection.execute(
+                `INSERT INTO student_subjects (student_id, subject_id) VALUES (?, ?)`,
+                [id, subject_id]
+            );
+        }
+
+        await connection.execute(
+            `UPDATE users SET first_login = FALSE WHERE id = ?`,
+            [id]
+        );
+
+        await connection.commit(); // Commit the transaction if all inserts succeed
+    } catch (error) {
+        await connection.rollback(); // Rollback the transaction in case of an error
+        console.error(`Error adding subjects: ${error.message}`);
+        throw error;
+    } finally {
+        connection.release(); // Release the connection back to the pool
+    }
+};
+
+
 // Update a student by ID
 exports.updateStudent = (id, student) => {
     const { first_name, middle_name, last_name, degree, yr_and_section, student_type } = student;

@@ -24,6 +24,19 @@ exports.addStudent = async (req, res) => {
     }
 };
 
+exports.addSubject = async (req, res) => {
+    const id = req.params.id
+    const  payload  = req.body;
+    console.log(payload)
+
+    try {
+        await studentModel.addSubject(id, payload);
+        res.json({ message: 'Subjects added successfully'})
+    } catch (error) {
+        res.status(500).json({error: error.message})
+    }
+}
+
 // Update a student
 exports.updateStudent = async (req, res) => {
     const { id } = req.params;

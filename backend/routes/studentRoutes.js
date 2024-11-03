@@ -8,6 +8,8 @@ router.get('/', studentController.getAllStudents);
 // Add a new student
 router.post('/', studentController.addStudent);
 
+router.post('/:id/add-subject', studentController.addSubject)
+
 // Update a student
 router.put('/:id', studentController.updateStudent);
 

@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia';
 import studentService from '@/services/studentService';
+import { useAuthStore } from '@/stores/authStore';
 
 export const useStudentStore = defineStore('studentStore', {
   state: () => ({
@@ -16,6 +17,16 @@ export const useStudentStore = defineStore('studentStore', {
         console.error("Failed to fetch Students:", error);
       } finally {
         this.isLoading = false;
+      }
+    },
+
+    async addSubject(payload) {
+      try {
+        const authStore = useAuthStore();
+        const id = authStore.userId; 
+        await studentService.addSubject(id, payload)
+      } catch (error) {
+        console.error("Failed to add Subjects", error)
       }
     },
 

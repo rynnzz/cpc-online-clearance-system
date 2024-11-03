@@ -28,7 +28,6 @@ export default {
   },
 
   addYearSection(id, sections) {
-    console.log('Sending data:', sections);
     return axios.post(`${API_URL}/${id}/year-sections`, sections);
   },
 
