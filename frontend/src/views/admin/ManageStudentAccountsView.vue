@@ -28,7 +28,7 @@
             <th class="p-4">#</th>
             <th class="p-4">Full Name</th>
             <th class="p-4">Email</th>
-            <th class="p-4">Degree</th>
+            <th class="p-4">course</th>
             <th class="p-4">Year and Section</th>
             <th class="p-4">Student Type</th>
             <th class="p-4">Actions</th>
@@ -39,8 +39,8 @@
             <td class="p-4">{{ index + 1 }}</td>
             <td class="p-4">{{ student.first_name }} {{ student.middle_name }} {{ student.last_name }}</td>
             <td class="p-4">{{ student.email }}</td>
-            <td class="p-4">{{ student.degree }}</td>
-            <td class="p-4">{{ student.yr_and_section }}</td>
+            <td class="p-4">{{ student.course }}</td>
+            <td class="p-4">{{ student.year_and_section }}</td>
             <td class="p-4">{{ student.student_type }}</td>
             <td class="p-4 space-x-2 flex">
               <button @click="editStudent(student)" class="btn btn-warning flex items-center">
@@ -96,24 +96,6 @@
               class="input w-full bg-gray-700 text-white"
               required
             />
-            <input
-              v-model="newStudent.yr_and_section"
-              type="text"
-              placeholder="Year and Section"
-              class="input w-full bg-gray-700 text-white"
-              required
-            />
-            <select 
-              v-model="newStudent.degree" 
-              class="select w-full bg-gray-700 text-white" 
-              required>
-              <option value="" disabled>Select Degree</option>
-              <option value="BSIT">BSIT</option>
-              <option value="BSHM">BSHM</option>
-              <option value="BSED">BSED</option>
-              <option value="BEED">BEED</option>
-            </select>
-
             <select 
               v-model="newStudent.student_type" 
               class="select w-full bg-gray-700 text-white" 
@@ -177,12 +159,12 @@
           required
         />
         
-        <!-- Degree Dropdown -->
+        <!-- course Dropdown -->
         <select 
-          v-model="currentStudent.degree" 
+          v-model="currentStudent.course" 
           class="select w-full bg-gray-700 text-white" 
           required>
-          <option value="" disabled>Select Degree</option>
+          <option value="" disabled>Select Course</option>
           <option value="BSIT">BSIT</option>
           <option value="BSHM">BSHM</option>
           <option value="BSED">BSED</option>
@@ -200,7 +182,7 @@
         </select>
 
         <input
-          v-model="currentStudent.yr_and_section"
+          v-model="currentStudent.year_and_section"
           type="text"
           placeholder="Year and Section"
           class="input w-full bg-gray-700 text-white"
@@ -228,7 +210,7 @@ import { useStudentStore } from '@/stores/studentStore'
 
 const studentStore = useStudentStore()
 
-const newStudent = ref({ first_name: '', middle_name: '', last_name: '', email: '', password: '', degree: '', yr_and_section: '', student_type: '' })
+const newStudent = ref({ first_name: '', middle_name: '', last_name: '', email: '', password: '', course: '', year_and_section: '', student_type: '' })
 const isAddModalOpen = ref(false)
 const isEditing = ref(false)
 const currentStudent = ref({})
@@ -240,7 +222,7 @@ const openAddModal = () => {
 
 const closeAddModal = () => {
   isAddModalOpen.value = false
-  newStudent.value = { first_name: '', middle_name: '', last_name: '', email: '', password: '', degree: '', yr_and_section: '', student_type: '' }
+  newStudent.value = { first_name: '', middle_name: '', last_name: '', email: '', password: '', course: '', year_and_section: '', student_type: '' }
 }
 
 onMounted(async () => {
@@ -292,9 +274,9 @@ const filteredStudents = computed(() => {
   return students.value.filter(student => 
     `${student.first_name} ${student.middle_name} ${student.last_name}`.toLowerCase().includes(query) ||
     student.email.toLowerCase().includes(query) ||
-    student.degree.toLowerCase().includes(query) ||
+    student.course.toLowerCase().includes(query) ||
     student.student_type.toLowerCase() === query ||
-    student.yr_and_section.toLowerCase().includes(query)
+    student.year_and_section.toLowerCase().includes(query)
   );
 });
 

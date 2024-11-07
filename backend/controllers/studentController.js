@@ -5,8 +5,7 @@ const studentModel = require('../models/studentModel');
 // Get all students
 exports.getAllStudents = async (req, res) => {
     try {
-        const role = 'student'; // Specify the role you want to filter by
-        const [students] = await studentModel.getAllStudents(role);
+        const [students] = await studentModel.getAllStudents();
         res.json(students);
     } catch (err) {
         res.status(500).json({ error: err.message });

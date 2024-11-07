@@ -9,7 +9,7 @@ export default {
   },
 
   getTeacherInfo(id) {
-    return axios.get(`${API_URL}/${id}`)
+    return axios.get(`${API_URL}/${id}/get-teacher-info`)
   },
 
   // Add a new teacher

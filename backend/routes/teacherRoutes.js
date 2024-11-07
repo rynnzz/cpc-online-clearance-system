@@ -7,7 +7,7 @@ const teacherController = require('../controllers/teacherController');
 // Route to get all teachers
 router.get('/', teacherController.getAllTeachers);
 
-router.get('/:id', teacherController.getTeacherInfo)
+router.get('/:id/get-teacher-info', teacherController.getTeacherInfo)
 
 // Route to add a new teacher
 router.post('/', teacherController.addTeacher);
