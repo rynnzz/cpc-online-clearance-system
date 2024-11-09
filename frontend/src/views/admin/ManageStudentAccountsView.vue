@@ -1,12 +1,16 @@
 <template>
   <div class="flex-1 p-8 bg-gray-900 text-gray-100">
     <div class="flex justify-between items-center mb-6">
-      <h1 class="text-4xl font-bold">Manage Student Accounts</h1>
-      <!-- Button to trigger Add Student Modal -->
-      <button @click="openAddModal" class="btn btn-primary flex items-center">
-        <i class="fas fa-plus mr-2"></i>
-        Add New
-      </button>
+      <h1 class="text-4xl sm:text-2xl font-bold">Manage Student Accounts</h1>
+      <!-- Buttons to trigger Add Student and Bulk Add Modal -->
+      <div class="space-x-4">
+        <button @click="openAddModal" class="btn btn-primary">
+          <i class="fas fa-plus mr-2"></i> Add New
+        </button>
+        <button @click="openBulkAddModal" class="btn btn-secondary">
+          <i class="fas fa-file-upload mr-2"></i> Bulk Add
+        </button>
+      </div>
     </div>
 
     <!-- Search Input -->
@@ -21,186 +25,78 @@
     </div>
 
     <!-- Students Table -->
-    <div class="overflow-x-auto">
-      <table class="table w-full bg-gray-800 shadow-md border border-gray-700">
-        <thead>
-          <tr class="bg-gray-700">
-            <th class="p-4">#</th>
-            <th class="p-4">Full Name</th>
-            <th class="p-4">Email</th>
-            <th class="p-4">course</th>
-            <th class="p-4">Year and Section</th>
-            <th class="p-4">Student Type</th>
-            <th class="p-4">Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="(student, index) in filteredStudents" :key="student.id" class="border-b border-gray-700 hover:bg-gray-600">
-            <td class="p-4">{{ index + 1 }}</td>
-            <td class="p-4">{{ student.first_name }} {{ student.middle_name }} {{ student.last_name }}</td>
-            <td class="p-4">{{ student.email }}</td>
-            <td class="p-4">{{ student.course }}</td>
-            <td class="p-4">{{ student.year_and_section }}</td>
-            <td class="p-4">{{ student.student_type }}</td>
-            <td class="p-4 space-x-2 flex">
-              <button @click="editStudent(student)" class="btn btn-warning flex items-center">
-                <i class="fas fa-edit mr-2"></i> Edit
-              </button>
-              <button @click="deleteStudent(student.id)" class="btn btn-error flex items-center">
-                <i class="fas fa-trash mr-2"></i> Delete
-              </button>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
+    <table class="table w-full bg-gray-800 text-white">
+      <thead>
+        <tr class="bg-gray-700">
+          <th>#</th>
+          <th>Full Name</th>
+          <th>Email</th>
+          <th>Course</th>
+          <th>Year and Section</th>
+          <th>Student Type</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr v-for="(student, index) in filteredStudents" :key="student.id" class="hover:bg-gray-600">
+          <td>{{ index + 1 }}</td>
+          <td>{{ student.first_name }} {{ student.middle_name }} {{ student.last_name }}</td>
+          <td>{{ student.email }}</td>
+          <td>{{ student.course }}</td>
+          <td>{{ student.year_and_section }}</td>
+          <td>{{ student.student_type }}</td>
+          <td class="flex space-x-2">
+            <button @click="editStudent(student)" class="btn btn-warning">
+              <i class="fas fa-edit"></i>
+            </button>
+            <button @click="deleteStudent(student.id)" class="btn btn-error">
+              <i class="fas fa-trash"></i>
+            </button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
 
     <!-- Add Student Modal -->
-    <div v-if="isAddModalOpen" class="fixed inset-0 bg-gray-900 bg-opacity-80 flex justify-center items-center z-50">
-      <div class="bg-gray-800 p-6 rounded shadow-lg w-1/2">
+    <div v-if="isAddModalOpen" class="modal modal-open">
+      <div class="modal-box bg-gray-800 text-white">
         <h2 class="text-2xl font-semibold mb-4">Add Student</h2>
         <form @submit.prevent="handleAddStudent">
           <div class="space-y-4">
-            <input
-              v-model="newStudent.first_name"
-              type="text"
-              placeholder="First Name"
-              class="input w-full bg-gray-700 text-white"
-              required
-            />
-            <input
-              v-model="newStudent.middle_name"
-              type="text"
-              placeholder="Middle Name"
-              class="input w-full bg-gray-700 text-white"
-              required
-            />
-            <input
-              v-model="newStudent.last_name"
-              type="text"
-              placeholder="Last Name"
-              class="input w-full bg-gray-700 text-white"
-              required
-            />
-            <input
-              v-model="newStudent.email"
-              type="email"
-              placeholder="Email"
-              class="input w-full bg-gray-700 text-white"
-              required
-            />
-            <input
-              v-model="newStudent.password"
-              type="password"
-              placeholder="Password"
-              class="input w-full bg-gray-700 text-white"
-              required
-            />
-            <select 
-              v-model="newStudent.student_type" 
-              class="select w-full bg-gray-700 text-white" 
-              required>
+            <input v-model="newStudent.first_name" type="text" placeholder="First Name" class="input input-bordered w-full bg-gray-700" required />
+            <input v-model="newStudent.middle_name" type="text" placeholder="Middle Name" class="input input-bordered w-full bg-gray-700" required />
+            <input v-model="newStudent.last_name" type="text" placeholder="Last Name" class="input input-bordered w-full bg-gray-700" required />
+            <input v-model="newStudent.email" type="email" placeholder="Email" class="input input-bordered w-full bg-gray-700" required />
+            <input v-model="newStudent.password" type="password" placeholder="Password" class="input input-bordered w-full bg-gray-700" required />
+            <select v-model="newStudent.student_type" class="select select-bordered w-full bg-gray-700" required>
               <option value="" disabled>Select Student Type</option>
               <option value="Regular">Regular</option>
               <option value="Irregular">Irregular</option>
             </select>
           </div>
-          <div class="mt-6 flex justify-end space-x-2">
-            <button class="btn btn-secondary" @click="closeAddModal">
-              Cancel
-            </button>
-            <button class="btn btn-primary" type="submit">
-              Add Student
-            </button>
+          <div class="modal-action mt-4">
+            <button type="button" class="btn btn-secondary" @click="closeAddModal">Cancel</button>
+            <button type="submit" class="btn btn-primary">Add Student</button>
           </div>
         </form>
       </div>
     </div>
 
-    <!-- Edit Student Modal -->
-    <div v-if="isEditing" class="fixed inset-0 bg-gray-900 bg-opacity-80 flex justify-center items-center z-50">
-  <div class="bg-gray-800 p-6 rounded shadow-lg w-1/2">
-    <h2 class="text-2xl mb-4">Edit Student</h2>
-    <form @submit.prevent="updateStudent">
-      <div class="space-y-4">
-        <input
-          v-model="currentStudent.first_name"
-          type="text"
-          placeholder="First Name"
-          class="input w-full bg-gray-700 text-white"
-          required
-        />
-        <input
-          v-model="currentStudent.middle_name"
-          type="text"
-          placeholder="Middle Name"
-          class="input w-full bg-gray-700 text-white"
-          required
-        />
-        <input
-          v-model="currentStudent.last_name"
-          type="text"
-          placeholder="Last Name"
-          class="input w-full bg-gray-700 text-white"
-          required
-        />
-        <input
-          v-model="currentStudent.email"
-          type="email"
-          placeholder="Email"
-          class="input w-full bg-gray-700 text-white"
-          required
-        />
-        <input
-          v-model="currentStudent.password"
-          type="password"
-          placeholder="Password"
-          class="input w-full bg-gray-700 text-white"
-          required
-        />
-        
-        <!-- course Dropdown -->
-        <select 
-          v-model="currentStudent.course" 
-          class="select w-full bg-gray-700 text-white" 
-          required>
-          <option value="" disabled>Select Course</option>
-          <option value="BSIT">BSIT</option>
-          <option value="BSHM">BSHM</option>
-          <option value="BSED">BSED</option>
-          <option value="BEED">BEED</option>
-        </select>
-
-        <!-- Student Type Dropdown -->
-        <select 
-          v-model="currentStudent.student_type" 
-          class="select w-full bg-gray-700 text-white" 
-          required>
-          <option value="" disabled>Select Student Type</option>
-          <option value="Regular">Regular</option>
-          <option value="Irregular">Irregular</option>
-        </select>
-
-        <input
-          v-model="currentStudent.year_and_section"
-          type="text"
-          placeholder="Year and Section"
-          class="input w-full bg-gray-700 text-white"
-          required
-        />
+    <!-- Bulk Add Modal -->
+    <div v-if="isBulkAddModalOpen" class="modal modal-open">
+      <div class="modal-box bg-gray-800 text-white">
+        <h2 class="text-2xl font-semibold mb-4">Bulk Add Students</h2>
+        <form @submit.prevent="handleBulkAdd">
+          <div class="mb-4">
+            <input type="file" @change="handleFileUpload" class="file-input file-input-bordered w-full bg-gray-700" accept=".xlsx, .xls" />
+          </div>
+          <div class="modal-action mt-4">
+            <button type="button" class="btn btn-secondary" @click="closeBulkAddModal">Cancel</button>
+            <button type="submit" class="btn btn-primary">Add Students</button>
+          </div>
+        </form>
       </div>
-      <div class="mt-6 flex justify-end space-x-2">
-        <button @click="cancelEdit" type="button" class="btn btn-secondary">
-          Cancel
-        </button>
-        <button type="submit" class="btn btn-primary">
-          Update Student
-        </button>
-      </div>
-    </form>
-  </div>
-</div>
-
+    </div>
   </div>
 </template>
 
@@ -212,22 +108,43 @@ const studentStore = useStudentStore()
 
 const newStudent = ref({ first_name: '', middle_name: '', last_name: '', email: '', password: '', course: '', year_and_section: '', student_type: '' })
 const isAddModalOpen = ref(false)
+const isBulkAddModalOpen = ref(false)
 const isEditing = ref(false)
 const currentStudent = ref({})
 const searchQuery = ref('')
+const file = ref(null)
 
-const openAddModal = () => {
-  isAddModalOpen.value = true
+const openAddModal = () => { isAddModalOpen.value = true }
+const closeAddModal = () => { isAddModalOpen.value = false }
+
+const openBulkAddModal = () => { isBulkAddModalOpen.value = true }
+const closeBulkAddModal = () => { isBulkAddModalOpen.value = false }
+
+const handleFileUpload = (event) => {
+  file.value = event.target.files[0] // Get the uploaded file
 }
 
-const closeAddModal = () => {
-  isAddModalOpen.value = false
-  newStudent.value = { first_name: '', middle_name: '', last_name: '', email: '', password: '', course: '', year_and_section: '', student_type: '' }
+const handleBulkAdd = async () => {
+  if (!file.value) {
+    alert("Please upload an Excel file.")
+    return
+  }
+  try {
+    const formData = new FormData()
+    formData.append('file', file.value)
+    
+    // Send the form data to the backend
+    await studentStore.bulkAddStudents(formData)
+    alert("Students added successfully.")
+    closeBulkAddModal()
+  } catch (error) {
+    console.error("Error adding Students:", error)
+  }
 }
 
 onMounted(async () => {
-  await studentStore.fetchStudents();
-});
+  await studentStore.fetchStudents()
+})
 
 const handleAddStudent = async () => {
   try {
@@ -279,36 +196,4 @@ const filteredStudents = computed(() => {
     student.year_and_section.toLowerCase().includes(query)
   );
 });
-
 </script>
-
-<style scoped>
-table {
-  width: 100%;
-  min-width: 600px; /* Minimum width to prevent layout breaking */
-}
-
-th, td {
-  padding: 0.75rem; /* Adjust padding for better mobile appearance */
-  text-align: left;
-}
-
-@media (max-width: 768px) {
-  th, td {
-    font-size: 14px; /* Reduce text size on smaller devices */
-  }
-
-  .p-4 {
-    padding: 0.5rem; /* Reduce padding for smaller screens */
-  }
-
-  .btn {
-    padding: 0.25rem 0.5rem; /* Reduce button padding for small screens */
-  }
-
-  .modal-content {
-    width: 90%; /* Make modal width responsive */
-    max-width: none; /* Override max-width for modal */
-  }
-}
-</style>

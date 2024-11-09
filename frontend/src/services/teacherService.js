@@ -17,6 +17,12 @@ export default {
     return axios.post(API_URL, teacher);
   },
 
+  bulkAddTeachers(formData) {
+    return axios.post(`${API_URL}/bulk-add`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+  },
+
   // Update teacher details
   updateTeacher(id, teacher) {
     return axios.put(`${API_URL}/${id}`, teacher);

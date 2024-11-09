@@ -1,6 +1,9 @@
 // controllers/teacherController.js
-
+const multer = require('multer')
+const xlsx = require('xlsx')
 const teacherModel = require('../models/teacherModel');
+
+const upload = multer({ dest: 'uploads/' })
 
 // Get all teachers
 exports.getAllTeachers = async (req, res) => {
@@ -25,14 +28,39 @@ exports.getTeacherInfo = async (req, res) => {
             return res.status(404).json({ message: 'User not found' });
         }
 
-        // Organize the data so each subject has its own entry with course, year, and section
-        const subjects = user.map(item => ({
-            course: item.course,
-            yearAndSection: item.year_and_section,
-            subjectName: item.subject_name
-        }));
+        // Organize data by sections and subjects
+        const subjects = [];
+        const subjectMap = {};
 
-        // Send user details including organized subjects
+        user.forEach(item => {
+            const subjectKey = `${item.course}-${item.year_and_section}-${item.subject_name}`;
+
+            // Check if this subject and section already exists in the map
+            if (!subjectMap[subjectKey]) {
+                // Initialize entry in the map
+                subjectMap[subjectKey] = {
+                    course: item.course,
+                    yearAndSection: item.year_and_section,
+                    sectionId: item.section_id,         // Add sectionId here
+                    subjectId: item.subject_id,         // Add subjectId here
+                    subjectName: item.subject_name,
+                    students: []
+                };
+                subjects.push(subjectMap[subjectKey]);
+            }
+
+            // If there is a student associated with this section and subject, add the student details
+            if (item.student_id) {
+                subjectMap[subjectKey].students.push({
+                    studentId: item.student_id,
+                    firstName: item.student_first_name,
+                    lastName: item.student_last_name,
+                    status: item.clearance_status
+                });
+            }
+        });
+
+        // Send user details including organized subjects with students
         res.json({
             teacherId: user[0].teacher_id,
             firstName: user[0].first_name,
@@ -51,8 +79,6 @@ exports.getTeacherInfo = async (req, res) => {
 
 
 
-
-
 // Add a new teacher
 exports.addTeacher = async (req, res) => {
     const newTeacher = req.body;
@@ -61,6 +87,37 @@ exports.addTeacher = async (req, res) => {
         res.json({ message: 'Teacher added successfully' });
     } catch (err) {
         res.status(500).json({ error: err.message });
+    }
+};
+
+exports.bulkAddTeachers = async (req, res) => {
+    try {
+        if (!req.file) {
+            return res.status(400).json({ message: 'No file uploaded' });
+        }
+
+        const workbook = xlsx.readFile(req.file.path);
+        const sheetName = workbook.SheetNames[0];
+        const worksheet = workbook.Sheets[sheetName];
+        const jsonData = xlsx.utils.sheet_to_json(worksheet);
+
+        // Map rows to student objects
+        const teachers = jsonData.map(row => ({
+            first_name: row['First Name'],
+            middle_name: row['Middle Name'],
+            last_name: row['Last Name'],
+            email: row['Email'],
+            password: row['Password'],
+            teacher_type: row['Teacher Type']
+        }));
+
+        // Pass the array of students to the bulkAddStudents model method
+        await teacherModel.bulkAddTeachers(teachers); // Ensure bulkAddStudents accepts an array
+
+        res.json({ message: 'Teachers added successfully' });
+    } catch (error) {
+        console.error('Error adding Teachers:', error);
+        res.status(500).json({ message: 'Server error' });
     }
 };
 

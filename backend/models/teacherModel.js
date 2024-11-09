@@ -108,25 +108,39 @@ exports.getAllTeachers = async (role, page = 1, limit = 50000) => {
 
 exports.getTeacherInfo = async (id) => {
     return db.execute(`
-        SELECT u.id AS teacher_id, 
-               u.first_name, 
-               u.middle_name, 
-               u.last_name, 
-               u.email, 
-               u.role, 
-               td.teacher_type,
-               sec.course,
-               sec.year_and_section,
-               sec.id AS section_id,
-               s.name AS subject_name
+        SELECT 
+            u.id AS teacher_id, 
+            u.first_name, 
+            u.middle_name, 
+            u.last_name, 
+            u.email, 
+            u.role, 
+            td.teacher_type,
+            sec.course,
+            sec.year_and_section,
+            sec.id AS section_id,
+            s.id AS subject_id,
+            s.name AS subject_name,
+            ss.student_id,
+            su.first_name AS student_first_name,
+            su.last_name AS student_last_name,
+            COALESCE(cs.status, 'Pending') AS clearance_status
         FROM users u
         JOIN teacher_details td ON u.id = td.teacher_id
-        LEFT JOIN teacher_subjects tsub ON tsub.teacher_id = u.id
-        LEFT JOIN sections sec ON sec.id = tsub.section_id
+        LEFT JOIN teacher_sections ts ON ts.teacher_id = u.id
+        LEFT JOIN sections sec ON sec.id = ts.section_id
+        LEFT JOIN teacher_subjects tsub ON tsub.teacher_id = u.id AND tsub.section_id = sec.id
         LEFT JOIN subjects s ON s.id = tsub.subject_id
-        WHERE u.role = 'teacher' AND u.id = ?
-        ORDER BY sec.course, sec.year_and_section, s.name`, [id]);
-}
+        LEFT JOIN student_sections ss ON ss.section_id = sec.id
+        LEFT JOIN student_subjects ssb ON ssb.student_id = ss.student_id AND ssb.subject_id = s.id
+        LEFT JOIN users su ON su.id = ss.student_id
+        LEFT JOIN clearance_status cs ON cs.student_id = ss.student_id AND cs.subject_id = s.id AND cs.section_id = sec.id
+        WHERE u.role = 'teacher' 
+          AND u.id = ?
+        ORDER BY sec.course, sec.year_and_section, s.name, su.last_name, su.first_name;
+    `, [id]);
+};
+
 
 
 
@@ -184,11 +198,10 @@ exports.addYearSection = async (data) => {
 
             const subject_id = subjectResult.id;
 
-            // Insert into teacher_subjects (or update if already exists)
+            // Insert into teacher_subjects (or ignore if already exists)
             await connection.execute(
                 `INSERT INTO teacher_subjects (teacher_id, section_id, subject_id)
-                 VALUES (?, ?, ?) 
-                 ON DUPLICATE KEY UPDATE section_id = VALUES(section_id)`,
+                 VALUES (?, ?, ?)`,
                 [teacher_id, section_id, subject_id]
             );
         }
@@ -216,9 +229,6 @@ exports.addYearSection = async (data) => {
         connection.release(); // Release the connection back to the pool
     }
 };
-
-
-
 
 
 // Add a new teacher
@@ -249,6 +259,50 @@ exports.addTeacher = async (teacher) => {
         throw new Error(`Error adding teacher account: ${err.message}`);
     }
 };
+
+exports.bulkAddTeachers = async (teachers) => {
+
+    const connection = await db.getConnection();
+    try {
+        await connection.beginTransaction();
+
+        const promises = teachers.map(async (teacher) => {
+            const { first_name, middle_name, last_name, email, password, teacher_type } = teacher;
+
+            // Ensure password is treated as a string
+            const passwordStr = String(password); // Convert to string
+
+            // Hash the password
+            const hashedPassword = await bcrypt.hash(passwordStr, saltRounds);
+
+            // Insert new user into the users table
+            const [userResult] = await connection.execute(`
+                INSERT INTO users (first_name, middle_name, last_name, email, password, role)
+                VALUES (?, ?, ?, ?, ?, 'teacher')
+            `, [first_name, middle_name || '', last_name, email, hashedPassword]);
+
+            const userId = userResult.insertId;
+
+            // Insert student details into the student_details table
+            await connection.execute(`
+                INSERT INTO teacher_details (teacher_id, teacher_type)
+                VALUES (?, ?)
+            `, [userId, teacher_type]);
+        });
+
+        await Promise.all(promises);
+
+        await connection.commit();
+        return { message: 'All teacher accounts added successfully' };
+    } catch (err) {
+        await connection.rollback();
+        console.error(`Error bulk adding teacher accounts: ${err.message}`);
+        throw new Error(`Error bulk adding teacher accounts: ${err.message}`);
+    } finally {
+        connection.release();
+    }
+};
+
 
 
 // Update a teacher by ID

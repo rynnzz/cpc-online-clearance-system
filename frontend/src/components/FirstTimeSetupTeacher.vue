@@ -67,7 +67,7 @@
             <h3 class="text-xl font-semibold text-white">Step 2: Draw Your Signature</h3>
             <div class="border-2 border-gray-300 rounded-lg p-4 bg-gray-800">
               <!-- Vue Signature Component -->
-              <vue-signature ref="signaturePad" :options="signatureOptions" class="w-full h-80 bg-white border border-gray-600 rounded-md"></vue-signature>
+              <vue-signature ref="signaturePad" :options="signatureOptions" class="w-full h-80 border border-gray-600 rounded-md"></vue-signature>
               <button type="button" class="mt-4 bg-pink-500 hover:bg-pink-600 text-white px-4 py-2 rounded-md" @click="clearSignature">Clear Signature</button>
             </div>
           </div>
@@ -111,6 +111,7 @@ const setupData = ref({
 
 const signatureOptions = ref({
   penColor: 'black', // Customize pen color
+  backgroundColor: 'rgba(0, 0, 0, 0)', // Set background to transparent
 });
 
 const signaturePad = ref(null); // Define ref for signature pad
@@ -173,7 +174,7 @@ const submitSetup = async () => {
     await teacherStore.addYearSection(payload); // Pass payload to the backend
 
     console.log('Payload Sent:', payload); // Log the payload being sent
-    // localStorage.setItem('isFirstLogin', '0');
+    localStorage.setItem('isFirstLogin', '0');
    
 
     alert('Year and Section added successfully');

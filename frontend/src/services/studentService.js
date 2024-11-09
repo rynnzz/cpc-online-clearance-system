@@ -7,8 +7,18 @@ export default {
     return axios.get(API_URL);
   },
 
+  getStudentInfo(id) {
+    return axios.get(`${API_URL}/${id}/get-student-info`)
+  },
+
   addStudent(student) {
     return axios.post(API_URL, student);
+  },
+
+  bulkAddStudents(formData) {
+    return axios.post(`${API_URL}/bulk-add`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
   },
 
   addSubject(id, payload) {

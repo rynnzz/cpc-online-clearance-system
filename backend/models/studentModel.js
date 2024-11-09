@@ -57,6 +57,50 @@ exports.addStudent = async (student) => {
     }
 };
 
+exports.bulkAddStudents = async (students) => {
+
+    const connection = await db.getConnection();
+    try {
+        await connection.beginTransaction();
+
+        const promises = students.map(async (student) => {
+            const { first_name, middle_name, last_name, email, password, student_type } = student;
+
+            // Ensure password is treated as a string
+            const passwordStr = String(password); // Convert to string
+
+            // Hash the password
+            const hashedPassword = await bcrypt.hash(passwordStr, saltRounds);
+
+            // Insert new user into the users table
+            const [userResult] = await connection.execute(`
+                INSERT INTO users (first_name, middle_name, last_name, email, password, role)
+                VALUES (?, ?, ?, ?, ?, 'student')
+            `, [first_name, middle_name || '', last_name, email, hashedPassword]);
+
+            const userId = userResult.insertId;
+
+            // Insert student details into the student_details table
+            await connection.execute(`
+                INSERT INTO student_details (student_id, student_type)
+                VALUES (?, ?)
+            `, [userId, student_type]);
+        });
+
+        await Promise.all(promises);
+
+        await connection.commit();
+        return { message: 'All student accounts added successfully' };
+    } catch (err) {
+        await connection.rollback();
+        console.error(`Error bulk adding student accounts: ${err.message}`);
+        throw new Error(`Error bulk adding student accounts: ${err.message}`);
+    } finally {
+        connection.release();
+    }
+};
+
+
 exports.addSubject = async (id, payload) => {
     const { subjects, course, year_and_section } = payload;
     const connection = await db.getConnection(); // Ensure a connection to the database
@@ -128,6 +172,50 @@ exports.addSubject = async (id, payload) => {
         connection.release(); // Release the connection back to the pool
     }
 };
+
+exports.getStudentInfo = async (studentId) => {
+    return db.execute(`
+        SELECT 
+            u.id AS student_id,
+            u.first_name,
+            u.middle_name,
+            u.last_name,
+            u.email,
+            u.role,
+            sd.student_type,
+            sec.course,
+            sec.year_and_section,
+            subj.name AS subject_name,
+            subj.code AS subject_code,
+            subj.units AS subject_units,
+            cs.status AS clearance_status,
+            CASE WHEN cs.status = 'Approved' THEN td.signature ELSE NULL END AS teacher_signature
+        FROM 
+            users u
+        JOIN 
+            student_details sd ON u.id = sd.student_id
+        JOIN 
+            student_sections ss ON u.id = ss.student_id
+        JOIN 
+            sections sec ON ss.section_id = sec.id
+        JOIN 
+            student_subjects ssub ON ssub.student_id = u.id
+        JOIN 
+            subjects subj ON subj.id = ssub.subject_id
+        LEFT JOIN 
+            clearance_status cs ON cs.student_id = u.id AND cs.subject_id = subj.id AND cs.section_id = sec.id
+        LEFT JOIN 
+            teacher_subjects ts ON ts.subject_id = subj.id AND ts.section_id = sec.id
+        LEFT JOIN 
+            teacher_details td ON td.teacher_id = ts.teacher_id
+        WHERE 
+            u.id = ?
+        ORDER BY 
+            sec.course, sec.year_and_section, subj.name;
+    `, [studentId]);
+};
+
+
 
 
 // Update a student by ID

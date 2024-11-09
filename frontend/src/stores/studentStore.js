@@ -6,6 +6,7 @@ export const useStudentStore = defineStore('studentStore', {
   state: () => ({
     students: [],
     isLoading: false,
+    currentTeacher: {}, 
   }),
   actions: {
     async fetchStudents() {
@@ -17,6 +18,18 @@ export const useStudentStore = defineStore('studentStore', {
         console.error("Failed to fetch Students:", error);
       } finally {
         this.isLoading = false;
+      }
+    },
+
+    async getStudentInfo() {
+      try {
+        const authStore = useAuthStore();
+        const studentId = authStore.userId;
+        const response = await studentService.getStudentInfo(studentId); // Pass the extracted userId to the service
+
+        this.currentStudent = response.data; // Store the teacher info in the currentTeacher state
+      } catch (error) {
+        console.error("Failed to get Teacher Info", error);
       }
     },
 
@@ -37,7 +50,17 @@ export const useStudentStore = defineStore('studentStore', {
       } catch (error) {
         console.error("Failed to add Student:", error);
       }
-    },    
+    }, 
+    
+    async bulkAddStudents(formData) {
+      try {
+        await studentService.bulkAddStudents(formData); // Call service to upload and process file
+        await this.fetchStudents(); // Refresh the students list after successful bulk add
+        console.log("Students added successfully through bulk add.");
+      } catch (error) {
+        console.error("Failed to bulk add Students:", error);
+      }
+    },
 
     async updateStudent(student) {
       try {

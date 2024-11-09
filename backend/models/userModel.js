@@ -25,3 +25,4 @@ exports.findTeacherSubjects = (teacherId) => {
 exports.findById = (id) => {
     return db.execute('SELECT * FROM users WHERE id = ?', [id]);
 };
+

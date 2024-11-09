@@ -1,6 +1,6 @@
 <template>
-  <div class="min-h-screen bg-cover bg-base-400 bg-center flex items-center justify-center">
-    <div class="bg-base-100 p-8 rounded-lg shadow-lg w-full max-w-sm">
+  <div class="min-h-screen bg-cover bg-gray-900 bg-center flex items-center justify-center">
+    <div class="bg-gray-800 p-8 rounded-lg shadow-lg w-full max-w-sm">
       <h2 class="text-2xl font-bold mb-6 text-center text-white">Welcome!</h2>
       <form @submit.prevent="handleLogin">
         <!-- Email Input -->

@@ -5,7 +5,8 @@ const authRoutes = require('./routes/authRoutes');
 const teacherRoutes = require('./routes/teacherRoutes');
 const studentRoutes = require('./routes/studentRoutes');
 const subjectRoutes = require('./routes/subjectRoutes');
-
+const clearanceRoutes = require('./routes/clearanceRoutes');
+const dashboardRoutes = require('./routes/dashboardRoutes');
 dotenv.config();
 
 const app = express();
@@ -20,6 +21,8 @@ app.use('/api/auth', authRoutes);
 app.use('/api/teachers', teacherRoutes);
 app.use('/api/students', studentRoutes);
 app.use('/api/subjects', subjectRoutes);
+app.use('/api/clearance', clearanceRoutes);
+app.use('/api/dashboard', dashboardRoutes);
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));

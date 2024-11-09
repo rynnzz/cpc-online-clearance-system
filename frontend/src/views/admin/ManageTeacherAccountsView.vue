@@ -51,9 +51,23 @@
   <button @click="nextPage" class="btn btn-primary ml-2" :disabled="currentPage >= totalPages">Next</button>
     </div>
 
+    <div v-if="isBulkAddModalOpen" class="modal modal-open">
+      <div class="modal-box bg-gray-800 text-white">
+        <h2 class="text-2xl font-semibold mb-4">Bulk Add Teachers</h2>
+        <form @submit.prevent="handleBulkAdd">
+          <div class="mb-4">
+            <input type="file" @change="handleFileUpload" class="file-input file-input-bordered w-full bg-gray-700" accept=".xlsx, .xls" />
+          </div>
+          <div class="modal-action mt-4">
+            <button type="button" class="btn btn-secondary" @click="closeBulkAddModal">Cancel</button>
+            <button type="submit" class="btn btn-primary">Add Teachers</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
     <AddTeacherModal :isOpen="isAddModalOpen" :closeModal="closeAddModal" />
     <EditTeacherModal :isOpen="isEditModalOpen" :closeModal="closeEditModal" :teacher="currentTeacher" />
-    <BulkAddModal :isOpen="isBulkAddModalOpen" :closeModal="closeBulkAddModal" />
     <SubjectsModal 
       :isOpen="isSubjectsModalOpen" :closeModal="closeSubjectsModal" :yearSectionSubjects="currentYearSectionSubjects" />
     <input type="checkbox" id="confirmation-modal" class="modal-toggle" v-model="isConfirmationModalOpen" />
@@ -75,7 +89,6 @@ import { ref, onMounted, computed } from 'vue';
 import { useTeacherStore } from '@/stores/teacherStore';
 import AddTeacherModal from '@/components/AddTeacherModal.vue';
 import EditTeacherModal from '@/components/EditTeacherModal.vue';
-import BulkAddModal from '@/components/BulkAddModal.vue';
 import SubjectsModal from '@/components/SubjectsModal.vue';
 
 const teacherStore = useTeacherStore();
@@ -87,9 +100,32 @@ const isConfirmationModalOpen = ref(false);
 const teacherIdToDelete = ref(null);
 const currentTeacher = ref({});
 const currentYearSectionSubjects = ref([]);
+const file = ref(null)
 
 const currentPage = ref(1);
 const pageSize = ref(10);
+
+const handleFileUpload = (event) => {
+  file.value = event.target.files[0] // Get the uploaded file
+}
+
+const handleBulkAdd = async () => {
+  if (!file.value) {
+    alert("Please upload an Excel file.")
+    return
+  }
+  try {
+    const formData = new FormData()
+    formData.append('file', file.value)
+    
+    // Send the form data to the backend
+    await teacherStore.bulkAddTeachers(formData)
+    alert("Teachers added successfully.")
+    closeBulkAddModal()
+  } catch (error) {
+    console.error("Error adding Teachers:", error)
+  }
+}
 
 onMounted(async () => {
   await teacherStore.fetchTeachers();
@@ -136,9 +172,9 @@ const openBulkAddModal = () => {
   isBulkAddModalOpen.value = true;
 };
 
-const closeBulkAddModal = () => {
-  isBulkAddModalOpen.value = false;
-};
+const closeBulkAddModal = () => { 
+  isBulkAddModalOpen.value = false
+}
 
 const openEditModal = (teacher) => {
   currentTeacher.value = { ...teacher };

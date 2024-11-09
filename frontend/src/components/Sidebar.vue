@@ -1,67 +1,64 @@
 <template>
   <div class="flex">
     <!-- Sidebar -->
-    <div :class="['bg-gray-800 text-white transition-all duration-300', { 'w-72': isOpen, 'w-20': !isOpen }]" 
+    <div :class="['bg-gray-800 text-white transition-all duration-300', { 'w-82': isOpen, 'w-20': !isOpen }]" 
          class="h-full overflow-x-auto shadow-md border-r border-gray-700">
 
       <div class="p-6 text-xl font-semibold">CPC Online Clearance</div>
 
-      <ul v-if="userRole === 'admin'">
-        <!-- Admin-specific menu items -->
-        <li 
-          :class="['flex items-center px-6 py-3 hover:bg-gray-700 cursor-pointer text-lg', { 'bg-gray-600': activeItem === 'dashboard' }]"
-          @click="navigateTo('dashboard')"
-        >
-          <i class="fas fa-tachometer-alt mr-3"></i> 
-          <span v-if="isOpen">Dashboard</span>
+         <!-- Admin Sidebar Menu -->
+         <ul v-if="userRole === 'admin'" class="space-y-4 px-6">
+        <!-- Dashboard -->
+        <li :class="{ 'bg-gray-600': activeItem === 'dashboard' }" class="rounded-md transition duration-300 ease-in-out hover:bg-gray-600">
+          <button @click="navigateTo('dashboard')" class="flex items-center w-full px-4 py-3 text-left text-lg">
+            <i class="fas fa-tachometer-alt mr-5"></i>
+            <span v-if="isOpen">Dashboard</span>
+          </button>
         </li>
         
-        <li 
-          :class="['flex items-center px-6 py-3 hover:bg-gray-700 cursor-pointer text-lg', { 'bg-gray-600': activeItem === 'approve-requests' }]"
-          @click="navigateTo('approve-requests')"
-        >
-          <i class="fas fa-check-circle mr-3"></i> 
-          <span v-if="isOpen">Approve Requests</span>
+        <!-- Approve Requests -->
+        <li :class="{ 'bg-gray-600': activeItem === 'approve-requests' }" class="rounded-md transition duration-300 ease-in-out hover:bg-gray-600">
+          <button @click="navigateTo('approve-requests')" class="flex items-center w-full px-4 py-3 text-left text-lg">
+            <i class="fas fa-check-circle mr-5"></i>
+            <span v-if="isOpen">Approve Requests</span>
+          </button>
         </li>
 
-        <li 
-          :class="['flex items-center px-6 py-3 hover:bg-gray-700 cursor-pointer text-lg', { 'bg-gray-600': activeItem === 'manage-subjects' }]"
-          @click="navigateTo('manage-subjects')"
-        >
-        <i class="fa-solid fa-book mr-3"></i>
-          <span v-if="isOpen">Manage Subjects</span>
+        <!-- Manage Subjects -->
+        <li :class="{ 'bg-gray-600': activeItem === 'manage-subjects' }" class="rounded-md transition duration-300 ease-in-out hover:bg-gray-600">
+          <button @click="navigateTo('manage-subjects')" class="flex items-center w-full px-4 py-3 text-left text-lg">
+            <i class="fa-solid fa-book mr-5"></i>
+            <span v-if="isOpen">Manage Subjects</span>
+          </button>
         </li>
 
         <!-- Separator -->
-        <hr class="my-4 border-gray-700 m-3" />
+        <hr class="my-4 border-gray-700" />
 
-        <!-- Manage Accounts Dropdown -->
-        <li class="relative">
-          <div 
-            class="flex items-center px-6 py-3 hover:bg-gray-700 cursor-pointer text-lg"
-            @click="toggleDropdown"
-          >
-            <i class="fas fa-users mr-3"></i> 
+        <!-- Manage Accounts Dropdown with Hover -->
+        <li class="relative rounded-md" @mouseenter="openDropdown" @mouseleave="conditionalCloseDropdown">
+          <div class="flex items-center w-full px-4 py-3 text-left text-lg cursor-pointer transition duration-300 ease-in-out hover:bg-gray-600" @click="toggleDropdown">
+            <i class="fas fa-users mr-5"></i>
             <span v-if="isOpen">Manage Accounts</span>
-            <i class="fas fa-chevron-down ml-auto" v-if="isOpen"></i>
+            <i :class="dropdownOpen ? 'fas fa-chevron-up' : 'fas fa-chevron-down'" class="ml-3" v-if="isOpen"></i>
           </div>
-          <ul 
-            v-if="dropdownOpen || activeItem === 'teacher-accounts' || activeItem === 'student-accounts'" 
-            class="ml-8 mt-2 bg-gray-700 rounded-lg"
-          >
-            <li 
-              :class="['flex items-center px-6 py-3 hover:bg-gray-600 cursor-pointer text-lg', { 'bg-gray-500': activeItem === 'teacher-accounts' }]"
-              @click="navigateTo('teacher-accounts')"
-            >
-              <i class="fas fa-chalkboard-teacher mr-3"></i> 
-              <span v-if="isOpen">Teacher Accounts</span>
+          
+          <!-- Dropdown Menu -->
+          <ul v-show="dropdownOpen" class=" rounded-lg shadow mt-1 p-1 space-y-1 transition-opacity duration-300 ease-in-out opacity-100">
+            <!-- Teacher Accounts -->
+            <li :class="{ 'bg-gray-600': activeItem === 'teacher-accounts' }" class="rounded-lg transition duration-300 ease-in-out hover:bg-gray-500">
+              <button @click="navigateTo('teacher-accounts')" class="flex items-center w-full px-4 py-3 text-left text-lg">
+                <i class="fas fa-chalkboard-teacher mr-4"></i>
+                Teacher Accounts
+              </button>
             </li>
-            <li 
-              :class="['flex items-center px-6 py-3 hover:bg-gray-600 cursor-pointer text-lg', { 'bg-gray-500': activeItem === 'student-accounts' }]"
-              @click="navigateTo('student-accounts')"
-            >
-              <i class="fas fa-user mr-3"></i> 
-              <span v-if="isOpen">Student Accounts</span>
+
+            <!-- Student Accounts -->
+            <li :class="{ 'bg-gray-600': activeItem === 'student-accounts' }" class="rounded-lg transition duration-300 ease-in-out hover:bg-gray-500">
+              <button @click="navigateTo('student-accounts')" class="flex items-center w-full px-4 py-3 text-left text-lg">
+                <i class="fas fa-user mr-4"></i>
+                Student Accounts
+              </button>
             </li>
           </ul>
         </li>
@@ -140,7 +137,7 @@ const route = useRoute();
 
 // Navigation function with active item setting
 const navigateTo = (item) => {
-  activeItem.value = item; // Set the clicked item as active
+  activeItem.value = item;
 
   const routes = {
     'dashboard': '/dashboard',
@@ -148,18 +145,30 @@ const navigateTo = (item) => {
     'manage-subjects': '/manage-subjects',
     'teacher-accounts': '/manage-teacher-accounts',
     'student-accounts': '/manage-student-accounts',
-    'approve-clearance': '/approve-clearance',
-    'view-clearance': '/view-clearance',
-    'profile': '/profile',
-    'upload-document': '/upload-document',
   };
 
-  router.push(routes[item]); // Navigate to the new route
+  router.push(routes[item]);
 };
 
-// Toggle dropdown for Manage Accounts
+// Dropdown handling
+const openDropdown = () => {
+  dropdownOpen.value = true;
+};
+
+const closeDropdown = () => {
+  dropdownOpen.value = false;
+};
+
 const toggleDropdown = () => {
   dropdownOpen.value = !dropdownOpen.value;
+};
+
+// Ensure dropdown stays open when submenu items are clicked
+const conditionalCloseDropdown = () => {
+  // Close the dropdown only if it's not actively open via clicking
+  if (!dropdownOpen.value) {
+    closeDropdown();
+  }
 };
 
 // Watch route change and set active menu item
@@ -172,13 +181,7 @@ watch(
       '/manage-subjects': 'manage-subjects',
       '/manage-teacher-accounts': 'teacher-accounts',
       '/manage-student-accounts': 'student-accounts',
-      '/approve-clearance': 'approve-clearance',
-      '/view-clearance': 'view-clearance',
-      '/profile': 'profile',
-      '/upload-document': 'upload-document',
     };
-
-    // Set the active item based on the current route path
     activeItem.value = pathToActiveItem[newPath] || 'dashboard';
   }
 );
@@ -191,22 +194,8 @@ onMounted(() => {
     '/manage-subjects': 'manage-subjects',
     '/manage-teacher-accounts': 'teacher-accounts',
     '/manage-student-accounts': 'student-accounts',
-    '/approve-clearance': 'approve-clearance',
-    '/view-clearance': 'view-clearance',
-    '/profile': 'profile',
-    '/upload-document': 'upload-document',
   };
   activeItem.value = pathToActiveItem[route.path] || 'dashboard';
-
-  authStore.initializeAuth()
+  authStore.initializeAuth();
 });
 </script>
-
-<style scoped>
-/* Custom styles for sidebar and scrolling */
-
-ul li {
-  margin-bottom: 1rem; /* Adds more spacing between menu items */
-}
-
-</style>

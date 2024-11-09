@@ -1,8 +1,9 @@
-// routes/teacherRoutes.js
-
 const express = require('express');
 const router = express.Router();
+const multer = require('multer');
 const teacherController = require('../controllers/teacherController');
+
+const upload = multer({ dest: 'uploads/' });
 
 // Route to get all teachers
 router.get('/', teacherController.getAllTeachers);
@@ -11,6 +12,8 @@ router.get('/:id/get-teacher-info', teacherController.getTeacherInfo)
 
 // Route to add a new teacher
 router.post('/', teacherController.addTeacher);
+
+router.post('/bulk-add', upload.single('file'), teacherController.bulkAddTeachers);
 
 router.post('/:id/year-sections', teacherController.addYearSection);
 

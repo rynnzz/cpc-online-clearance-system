@@ -74,6 +74,16 @@ export const useTeacherStore = defineStore('teacherStore', {
       }
     },
 
+    async bulkAddTeachers(formData) {
+      try {
+        await teacherService.bulkAddTeachers(formData); // Call service to upload and process file
+        await this.fetchTeachers(); // Refresh the students list after successful bulk add
+        console.log("Teachers added successfully through bulk add.");
+      } catch (error) {
+        console.error("Failed to bulk add Teachers:", error);
+      }
+    },
+
     async updateTeacher(teacher) {
       try {
         await teacherService.updateTeacher(teacher.id, teacher);
