@@ -52,12 +52,51 @@
               </table>
             </div>
           </div>
+
+          <!-- Non-Teaching Staff Clearance Section -->
+          <div class="mb-8">
+            <h2 class="text-2xl font-semibold mb-4">Non-Teaching Staff Clearance</h2>
+            <div class="overflow-x-auto">
+              <table class="table w-full bg-gray-800 text-white rounded-lg shadow-lg">
+                <thead>
+                  <tr class="bg-gray-700 text-white">
+                    <th class="py-3 px-4 text-left">Department</th>
+                    <th class="py-3 px-4 text-left">Staff Name</th>
+                    <th class="py-3 px-4 text-left">Status</th>
+                    <th class="py-3 px-4 text-left">Signature</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="(staff, sIndex) in studentInfo.nonTeachingStaff" :key="sIndex" class="hover:bg-gray-700">
+                    <td class="py-3 px-4">{{ staff.department }}</td>
+                    <td class="py-3 px-4">{{ staff.staffName }}</td>
+                    <td class="py-3 px-4" :class="{
+                      'text-blue-500': staff.status === 'Pending', 
+                      'text-green-500': staff.status === 'Approved', 
+                      'text-red-500': staff.status === 'Rejected'
+                    }">
+                      {{ staff.status || 'Pending' }}
+                    </td>
+                    <td class="py-3 px-4">
+                      <!-- Display the signature as an image only if it's approved and signature exists -->
+                      <img v-if="staff.status === 'Approved' && staff.signature" 
+                           :src="staff.signature" 
+                           alt="Staff Signature" 
+                           class="w-32 h-16 object-contain bg-transparent border-none" />
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
         </div>
         <div v-else class="text-gray-400">Loading student information...</div>
       </div>
     </div>
   </div>
 </template>
+
 
 <script setup>
 import { useStudentStore } from '@/stores/studentStore';

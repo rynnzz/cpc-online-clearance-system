@@ -37,9 +37,23 @@ exports.getUserCounts = async () => {
 exports.getRecentRegistrations = async () => {
   try {
     const [registrations] = await db.execute(`
-      SELECT first_name, last_name, role, created_at 
-      FROM users 
-      ORDER BY created_at DESC 
+      SELECT 
+        u.first_name, 
+        u.last_name, 
+        u.role, 
+        u.created_at,
+        CASE 
+          WHEN u.role = 'student' THEN sd.student_type
+          ELSE NULL 
+        END AS student_type,
+        CASE 
+          WHEN u.role = 'teacher' THEN td.teacher_type
+          ELSE NULL 
+        END AS teacher_type
+      FROM users u
+      LEFT JOIN student_details sd ON u.id = sd.student_id AND u.role = 'student'
+      LEFT JOIN teacher_details td ON u.id = td.teacher_id AND u.role = 'teacher'
+      ORDER BY u.created_at DESC 
       LIMIT 5
     `);
 

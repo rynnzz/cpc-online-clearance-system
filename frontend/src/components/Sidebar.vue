@@ -145,6 +145,11 @@ const navigateTo = (item) => {
     'manage-subjects': '/manage-subjects',
     'teacher-accounts': '/manage-teacher-accounts',
     'student-accounts': '/manage-student-accounts',
+    'view-clearance': '/view-clearance',
+    'upload-document': '/upload-document',
+    'profile': '/profile',
+    'approve-clearance': '/approve-clearance',
+
   };
 
   router.push(routes[item]);
@@ -181,6 +186,10 @@ watch(
       '/manage-subjects': 'manage-subjects',
       '/manage-teacher-accounts': 'teacher-accounts',
       '/manage-student-accounts': 'student-accounts',
+      '/view-clearance': 'view-clearance',
+      '/upload-document': 'upload-document',
+      '/profile': 'profile',
+      '/approve-clearance': 'approve-clearance',
     };
     activeItem.value = pathToActiveItem[newPath] || 'dashboard';
   }
@@ -194,6 +203,10 @@ onMounted(() => {
     '/manage-subjects': 'manage-subjects',
     '/manage-teacher-accounts': 'teacher-accounts',
     '/manage-student-accounts': 'student-accounts',
+    '/view-clearance': 'view-clearance',
+    '/upload-document': 'upload-document',
+    '/profile': 'profile',
+    '/approve-clearance': 'approve-clearance',
   };
   activeItem.value = pathToActiveItem[route.path] || 'dashboard';
   authStore.initializeAuth();

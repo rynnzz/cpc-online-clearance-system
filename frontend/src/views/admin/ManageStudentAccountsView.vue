@@ -13,21 +13,27 @@
       </div>
     </div>
 
-    <!-- Search Input -->
-    <div class="mb-4 relative">
-      <input
-        v-model="searchQuery"
-        type="text"
-        placeholder="Search"
-        class="input w-1/3 bg-gray-700 text-white pl-10"
-      />
-      <i class="fas fa-search text-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2"></i>
+    <!-- Search Input and Delete Selected Button -->
+    <div class="flex justify-between items-center mb-4">
+      <div class="relative w-full sm:w-1/3">
+        <input
+          v-model="searchQuery"
+          type="text"
+          placeholder="Search"
+          class="input w-full bg-gray-700 text-white pl-10"
+        />
+        <i class="fas fa-search text-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2"></i>
+      </div>
+      <button @click="bulkDelete" :disabled="!selectedStudents.length" class="btn btn-error flex items-center">
+        <i class="fas fa-trash mr-2"></i> Delete Selected
+      </button>
     </div>
 
     <!-- Students Table -->
     <table class="table w-full bg-gray-800 text-white">
       <thead>
         <tr class="bg-gray-700">
+          <th><input type="checkbox" @change="selectAll($event)" /></th>
           <th>#</th>
           <th>Full Name</th>
           <th>Email</th>
@@ -38,8 +44,9 @@
         </tr>
       </thead>
       <tbody>
-        <tr v-for="(student, index) in filteredStudents" :key="student.id" class="hover:bg-gray-600">
-          <td>{{ index + 1 }}</td>
+        <tr v-for="(student, index) in paginatedStudents" :key="student.id" class="hover:bg-gray-600">
+          <td><input type="checkbox" :value="student.id" v-model="selectedStudents" /></td>
+          <td>{{ (currentPage - 1) * pageSize + index + 1 }}</td>
           <td>{{ student.first_name }} {{ student.middle_name }} {{ student.last_name }}</td>
           <td>{{ student.email }}</td>
           <td>{{ student.course }}</td>
@@ -49,13 +56,20 @@
             <button @click="editStudent(student)" class="btn btn-warning">
               <i class="fas fa-edit"></i>
             </button>
-            <button @click="deleteStudent(student.id)" class="btn btn-error">
+            <button @click="openConfirmationModal(student.id)" class="btn btn-error">
               <i class="fas fa-trash"></i>
             </button>
           </td>
         </tr>
       </tbody>
     </table>
+
+    <!-- Pagination Controls -->
+    <div class="flex justify-end items-center my-4">
+      <button @click="previousPage" class="btn btn-primary mr-2" :disabled="currentPage === 1">Previous</button>
+      <span class="mr-4">Page {{ currentPage }} of {{ totalPages }}</span>
+      <button @click="nextPage" class="btn btn-primary ml-2" :disabled="currentPage >= totalPages">Next</button>
+    </div>
 
     <!-- Add Student Modal -->
     <div v-if="isAddModalOpen" class="modal modal-open">
@@ -97,6 +111,20 @@
         </form>
       </div>
     </div>
+
+    <!-- Confirmation Modal -->
+    <input type="checkbox" id="confirmation-modal" class="modal-toggle" v-model="isConfirmationModalOpen" />
+    <div class="modal">
+      <div class="modal-box">
+        <h2 class="text-lg font-bold">Confirm Deletion</h2>
+        <p class="py-4">Are you sure you want to delete this student? This action cannot be undone.</p>
+        <div class="modal-action">
+          <button class="btn" @click="deleteStudent(studentIdToDelete)">Yes, Delete</button>
+          <button class="btn" @click="closeConfirmationModal">Cancel</button>
+        </div>
+      </div>
+    </div>
+
   </div>
 </template>
 
@@ -109,10 +137,14 @@ const studentStore = useStudentStore()
 const newStudent = ref({ first_name: '', middle_name: '', last_name: '', email: '', password: '', course: '', year_and_section: '', student_type: '' })
 const isAddModalOpen = ref(false)
 const isBulkAddModalOpen = ref(false)
-const isEditing = ref(false)
-const currentStudent = ref({})
 const searchQuery = ref('')
 const file = ref(null)
+const selectedStudents = ref([]) // List of selected students for bulk actions
+const isConfirmationModalOpen = ref(false);
+const studentIdToDelete = ref(null);
+
+const currentPage = ref(1)
+const pageSize = ref(10)
 
 const openAddModal = () => { isAddModalOpen.value = true }
 const closeAddModal = () => { isAddModalOpen.value = false }
@@ -121,7 +153,7 @@ const openBulkAddModal = () => { isBulkAddModalOpen.value = true }
 const closeBulkAddModal = () => { isBulkAddModalOpen.value = false }
 
 const handleFileUpload = (event) => {
-  file.value = event.target.files[0] // Get the uploaded file
+  file.value = event.target.files[0]
 }
 
 const handleBulkAdd = async () => {
@@ -132,8 +164,6 @@ const handleBulkAdd = async () => {
   try {
     const formData = new FormData()
     formData.append('file', file.value)
-    
-    // Send the form data to the backend
     await studentStore.bulkAddStudents(formData)
     alert("Students added successfully.")
     closeBulkAddModal()
@@ -155,45 +185,69 @@ const handleAddStudent = async () => {
   }
 }
 
-const editStudent = (student) => {
-  isEditing.value = true
-  currentStudent.value = { ...student }
+// Bulk selection
+const selectAll = (event) => {
+  selectedStudents.value = event.target.checked ? paginatedStudents.value.map(student => student.id) : []
 }
 
-const updateStudent = async () => {
+// Bulk delete function
+const bulkDelete = async () => {
+  if (selectedStudents.value.length === 0) return
+  const confirmed = confirm(`Are you sure you want to delete ${selectedStudents.value.length} student(s)?`)
+  if (!confirmed) return
   try {
-    await studentStore.updateStudent(currentStudent.value)
-    isEditing.value = false
+    await Promise.all(selectedStudents.value.map(id => studentStore.deleteStudent(id)))
+    selectedStudents.value = []
+    await studentStore.fetchStudents()
+    alert("Selected students deleted successfully.")
   } catch (error) {
-    console.error("Error updating Student:", error)
+    console.error("Error deleting selected students:", error)
   }
 }
+
+const openConfirmationModal = (id) => {
+  studentIdToDelete.value = id;
+  isConfirmationModalOpen.value = true;
+};
+
+const closeConfirmationModal = () => {
+  isConfirmationModalOpen.value = false;
+  studentIdToDelete.value = null;
+};
 
 const deleteStudent = async (id) => {
   try {
-    await studentStore.deleteStudent(id)
+    await studentStore.deleteStudent(id);
+    await studentStore.fetchStudents();
+    alert("Student deleted successfully.");
   } catch (error) {
-    console.error("Error deleting Student:", error)
+    console.error('Error deleting student:', error);
   }
-}
+};
 
-const cancelEdit = () => {
-  isEditing.value = false
-}
-
-const students = computed(() => studentStore.students);
+const students = computed(() => studentStore.students)
 
 const filteredStudents = computed(() => {
-  if (!searchQuery.value) {
-    return students.value;
-  }
+  if (!searchQuery.value) return students.value;
   const query = searchQuery.value.toLowerCase();
+  
   return students.value.filter(student => 
-    `${student.first_name} ${student.middle_name} ${student.last_name}`.toLowerCase().includes(query) ||
-    student.email.toLowerCase().includes(query) ||
-    student.course.toLowerCase().includes(query) ||
-    student.student_type.toLowerCase() === query ||
-    student.year_and_section.toLowerCase().includes(query)
+    `${student.first_name ?? ''} ${student.middle_name ?? ''} ${student.last_name ?? ''}`.toLowerCase().includes(query) ||
+    (student.email ?? '').toLowerCase().includes(query) ||
+    (student.course ?? '').toLowerCase().includes(query) ||
+    (student.year_and_section ?? '').toLowerCase().includes(query) ||
+    (student.student_type ?? '').toLowerCase().includes(query)
   );
 });
+
+const paginatedStudents = computed(() => {
+  const start = (currentPage.value - 1) * pageSize.value
+  return filteredStudents.value.slice(start, start + pageSize.value)
+})
+
+const totalPages = computed(() => Math.ceil(filteredStudents.value.length / pageSize.value))
+
+const nextPage = () => { if (currentPage.value < totalPages.value) currentPage.value++ }
+const previousPage = () => { if (currentPage.value > 1) currentPage.value-- }
+
 </script>

@@ -72,6 +72,17 @@ const router = createRouter({
       name: 'unauthorized',
       component: UnauthorizedView,
       meta: { requiresAuth: true } // Only accessible when logged in
+    },
+    {
+      path: '/page-not-found',
+      name: 'page-not-found',
+      component: () => import('../views/PageNotFoundView.vue'),
+      meta: { requiresAuth: true } // Only accessible when logged in
+    },
+    {
+      path: '/:catchAll(.*)',
+      name: 'not-found',
+      redirect: { name: 'page-not-found' }
     }
   ]
 });
@@ -105,7 +116,7 @@ router.beforeEach((to, from, next) => {
       next(); // Proceed to the route if the role matches
     }
   } else if (to.matched.some(record => record.meta.requiresGuest) && isTokenValid(token)) {
-    next({ name: 'dashboard' });
+    next({ name: 'page-not-found' });
   } else {
     next();
   }

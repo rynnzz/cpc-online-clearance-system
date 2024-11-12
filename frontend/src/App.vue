@@ -7,16 +7,17 @@ import { useRoute } from 'vue-router';
 const route = useRoute();
 const isLoginPage = computed(() => route.path === '/'); // Check if current path is the login page
 const isUnauthorizedPage = computed(() => route.path ==='/unauthorized')
+const isPageNotFoundPage = computed(() => route.path ==='/page-not-found')
 </script>
 
 <template>
   <div class="flex flex-col w-screen min-h-screen bg-base-100">
     <!-- Import the Header Component -->
-    <Header v-if="!isLoginPage && !isUnauthorizedPage" />
+    <Header v-if="!isLoginPage && !isUnauthorizedPage && !isPageNotFoundPage" />
 
     <div class="flex flex-1">
       <!-- Sidebar Component -->
-      <Sidebar v-if="!isLoginPage && !isUnauthorizedPage" />
+      <Sidebar v-if="!isLoginPage && !isUnauthorizedPage && !isPageNotFoundPage" />
 
       <div class="flex-1 bg-base-200">
         <div v-if="isLoginPage">

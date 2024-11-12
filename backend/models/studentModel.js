@@ -188,8 +188,8 @@ exports.getStudentInfo = async (studentId) => {
             subj.name AS subject_name,
             subj.code AS subject_code,
             subj.units AS subject_units,
-            cs.status AS clearance_status,
-            CASE WHEN cs.status = 'Approved' THEN td.signature ELSE NULL END AS teacher_signature
+            COALESCE(cs.status, 'Pending') AS clearance_status,
+            CASE WHEN COALESCE(cs.status, 'Pending') = 'Approved' THEN td.signature ELSE NULL END AS teacher_signature
         FROM 
             users u
         JOIN 
@@ -203,19 +203,24 @@ exports.getStudentInfo = async (studentId) => {
         JOIN 
             subjects subj ON subj.id = ssub.subject_id
         LEFT JOIN 
-            clearance_status cs ON cs.student_id = u.id AND cs.subject_id = subj.id AND cs.section_id = sec.id
+            (SELECT student_id, subject_id, section_id, status 
+             FROM clearance_status 
+             WHERE student_id = ? 
+             GROUP BY student_id, subject_id, section_id) cs ON cs.student_id = u.id 
+                                                               AND cs.subject_id = subj.id 
+                                                               AND cs.section_id = sec.id
         LEFT JOIN 
-            teacher_subjects ts ON ts.subject_id = subj.id AND ts.section_id = sec.id
-        LEFT JOIN 
-            teacher_details td ON td.teacher_id = ts.teacher_id
+            (SELECT ts.subject_id, ts.section_id, td.signature
+             FROM teacher_subjects ts
+             JOIN teacher_details td ON ts.teacher_id = td.teacher_id
+             GROUP BY ts.subject_id, ts.section_id) td ON td.subject_id = subj.id 
+                                                         AND td.section_id = sec.id
         WHERE 
             u.id = ?
         ORDER BY 
             sec.course, sec.year_and_section, subj.name;
-    `, [studentId]);
+    `, [studentId, studentId]);
 };
-
-
 
 
 // Update a student by ID
@@ -231,7 +236,7 @@ exports.updateStudent = (id, student) => {
 // Delete a student by ID
 exports.deleteStudent = (id) => {
     return db.execute(`
-        DELETE FROM student_details 
-        WHERE student_id = ?
+        DELETE FROM users 
+        WHERE id = ?
     `, [id]);
 };
