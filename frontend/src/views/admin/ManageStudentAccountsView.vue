@@ -49,8 +49,8 @@
           <td>{{ (currentPage - 1) * pageSize + index + 1 }}</td>
           <td>{{ student.first_name }} {{ student.middle_name }} {{ student.last_name }}</td>
           <td>{{ student.email }}</td>
-          <td>{{ student.course }}</td>
-          <td>{{ student.year_and_section }}</td>
+          <td>{{ student.course || "Not Set-up yet" }}</td>
+          <td>{{ student.year_and_section || "Not Set-up yet" }}</td>
           <td>{{ student.student_type }}</td>
           <td class="flex space-x-2">
             <button @click="editStudent(student)" class="btn btn-warning">
@@ -139,7 +139,7 @@ const isAddModalOpen = ref(false)
 const isBulkAddModalOpen = ref(false)
 const searchQuery = ref('')
 const file = ref(null)
-const selectedStudents = ref([]) // List of selected students for bulk actions
+const selectedStudents = ref([])
 const isConfirmationModalOpen = ref(false);
 const studentIdToDelete = ref(null);
 

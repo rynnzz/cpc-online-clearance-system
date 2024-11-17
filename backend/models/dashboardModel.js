@@ -12,8 +12,9 @@ exports.getUserCounts = async () => {
   
       // Query to get the total count of subjects
       const [subjectCounts] = await db.execute(`
-        SELECT COUNT(*) AS total 
-        FROM subjects
+        SELECT COUNT(DISTINCT name) AS total 
+FROM subjects;
+
       `);
   
       // Structure the response to include both user counts and subjects count

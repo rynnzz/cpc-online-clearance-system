@@ -6,21 +6,26 @@ const xlsx = require('xlsx')
 const upload = multer({ dest: 'uploads/' })
 
 // Get all subjects with optional filters
-exports.getAllSubjects = async (req, res) => {
+exports.getAllSubjectsAndDepartments = async (req, res) => {
   try {
     const { department, year, school_year, semester } = req.query;
-    const [subjects] = await subjectModel.getAllSubjects({
+    
+    // Get both subjects and departments from the model
+    const { subjects, departments } = await subjectModel.getAllSubjectsAndDepartments({
       department,
       year,
       school_year,
       semester,
     });
-    res.json(subjects);
+    
+    // Send the subjects and departments in the response
+    res.json({ subjects, departments });
   } catch (err) {
-    console.error('Error fetching subjects:', err);
+    console.error('Error fetching subjects and departments:', err);
     res.status(500).json({ message: 'Server Error' });
   }
 };
+
 
 // Add a new subject
 exports.addSubject = async (req, res) => {
@@ -65,9 +70,9 @@ exports.bulkAddSubjects = async (req, res) => {
       school_year: row['School Year'],
       semester: row['Semester']
     }));
-
     // Insert subjects into the database
     await subjectModel.bulkAddSubjects(subjects);
+
     res.status(201).json({ message: 'Subjects added successfully' });
   } catch (err) {
     console.error('Error adding subjects from Excel:', err);
@@ -79,14 +84,15 @@ exports.bulkAddSubjects = async (req, res) => {
 exports.updateSubject = async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, code, units, department, year, schoolYear, semester } = req.body;
+    const { name, code, units, department, year, school_year, semester } = req.body;
+    console.log(req.body);
     await subjectModel.updateSubject(id, {
       name,
       code,
       units,
       department,
       year,
-      schoolYear,
+      school_year,
       semester,
     });
     res.json({ message: 'Subject updated successfully' });

@@ -18,7 +18,7 @@
         </div>
         <div class="flex-1">
           <label class="block text-lg">School Year</label>
-          <select v-model="formData.schoolYear" class="input input-bordered w-full bg-gray-700" required>
+          <select v-model="formData.school_year" class="input input-bordered w-full bg-gray-700" required>
             <option disabled value="">Select Year</option>
             <option v-for="year in schoolYears" :key="year" :value="year">{{ year }}</option>
           </select>
@@ -58,7 +58,6 @@
   // Define props and emits using the Composition API
   const props = defineProps({
     subjectData: Object,
-    departments: Array,
     yearNames: Object,
   });
   
@@ -73,6 +72,10 @@
       emit('update:subjectData', value);
     }
   });
+
+  console.log(formData.value);
+
+  const departments = ['BSHM', 'BSIT', 'BSED - MAJOR IN SCIENCE', 'BSED - MAJOR IN ENGLISH', 'BEED']
 
   const schoolYears = ['2024-2025', '2026-2027', '2027-2028']
   </script>

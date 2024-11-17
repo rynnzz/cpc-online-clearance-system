@@ -5,6 +5,7 @@ import subjectService from '@/services/subjectService';
 export const useSubjectStore = defineStore('subjectStore', {
   state: () => ({
     subjects: [],
+    departments: [],
     isLoading: false,
     error: null,
   }),
@@ -14,14 +15,16 @@ export const useSubjectStore = defineStore('subjectStore', {
       this.isLoading = true;
       try {
         const response = await subjectService.getAllSubjects();
-        this.subjects = response.data;
+        this.subjects = response.data.subjects;      // Set subjects
+        this.departments = response.data.departments; // Set departments
       } catch (error) {
-        console.error("Failed to fetch subjects:", error);
+        console.error("Failed to fetch subjects and departments:", error);
         this.error = error;
       } finally {
         this.isLoading = false;
       }
     },
+
 
     async addSubject(newSubject) {
       try {

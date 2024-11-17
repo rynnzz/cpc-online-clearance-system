@@ -6,7 +6,7 @@ const subjectController = require('../controllers/subjectController');
 const upload = multer({ dest: 'uploads/' });
 
 // Get all subjects with optional filtering
-router.get('/', subjectController.getAllSubjects);
+router.get('/', subjectController.getAllSubjectsAndDepartments);
 
 // Add a new subject
 router.post('/', subjectController.addSubject);
