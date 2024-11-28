@@ -33,15 +33,16 @@ exports.getTeacherInfo = async (req, res) => {
         const subjectMap = {};
 
         user.forEach(item => {
-            const subjectKey = `${item.course}-${item.year_and_section}-${item.subject_name}`;
+            const subjectKey = `${item.course_name}-${item.year}--${item.section}${item.subject_name}`;
 
             // Check if this subject and section already exists in the map
             if (!subjectMap[subjectKey]) {
                 // Initialize entry in the map
                 subjectMap[subjectKey] = {
-                    course: item.course,
-                    yearAndSection: item.year_and_section,
-                    sectionId: item.section_id,         // Add sectionId here
+                    course: item.course_name,
+                    year: item.year,
+                    sectionId: item.section_id,
+                    section: item.section,         // Add sectionId here
                     subjectId: item.subject_id,         // Add subjectId here
                     subjectName: item.subject_name,
                     students: []
@@ -68,7 +69,6 @@ exports.getTeacherInfo = async (req, res) => {
             lastName: user[0].last_name,
             email: user[0].email,
             role: user[0].role,
-            teacherType: user[0].teacher_type,
             subjects: subjects
         });
     } catch (error) {
@@ -108,7 +108,6 @@ exports.bulkAddTeachers = async (req, res) => {
             last_name: row['Last Name'],
             email: row['Email'],
             password: row['Password'],
-            teacher_type: row['Teacher Type']
         }));
 
         // Pass the array of students to the bulkAddStudents model method
@@ -121,30 +120,55 @@ exports.bulkAddTeachers = async (req, res) => {
     }
 };
 
-// Controller: Handling the payload (array of sections) and the signature
 exports.addYearSection = async (req, res) => {
-    const { sections, signature } = req.body; // Extract sections and signature from the payload
+    const { sections, signature, roles, handlesSection } = req.body;
+    console.log(req.body);
     const teacher_id = req.params.id;
 
-    // Validate the sections array
-    if (!Array.isArray(sections) || sections.length === 0) {
-        return res.status(400).json({ error: 'Invalid data format. Expected an array of sections.' });
-    }
-
     try {
-        for (const section of sections) {
-            const { course, year_and_section, subjects } = section;
+        if (handlesSection) {
+            // Validate the sections array if handlesSection is true
+            if (!Array.isArray(sections) || sections.length === 0) {
+                return res.status(400).json({ error: 'Sections must be provided when handlesSection is true.' });
+            }
 
-            // Call the model function to handle each section, including the signature
-            await teacherModel.addYearSection({ teacher_id, course, year_and_section, subjects, signature });
+            // Process each section
+            for (const section of sections) {
+                const { department, year, section: sectionName, subjects } = section;
+
+                if (!Array.isArray(subjects) || subjects.length === 0) {
+                    return res.status(400).json({ error: 'Each section must include subjects when handlesSection is true.' });
+                }
+
+                // Call the model function to handle each section
+                await teacherModel.addYearSection({
+                    teacher_id,
+                    course: department, // Pass department ID
+                    year,
+                    section: sectionName,
+                    subjects, // Array of subjects
+                    signature,
+                    roles,
+                });
+            }
+        } else {
+            // If handlesSection is false, set teacher sections to null
+            await teacherModel.clearTeacherSections({ teacher_id, roles, signature });
         }
 
-        res.json({ message: 'Year and Sections added successfully' });
+        res.status(200).json({
+            message: handlesSection
+                ? 'Roles, sections, and subjects successfully added.'
+                : 'Roles and signature successfully added. Teacher does not handle sections.',
+        });
     } catch (err) {
-        console.error('Error:', err.message);
-        res.status(500).json({ error: err.message });
+        console.error(`Error in addYearSection controller: ${err.message}`);
+        res.status(500).json({ error: 'Failed to add roles, sections, and subjects.' });
     }
 };
+
+
+
 
 // Update a teacher                                                                     
 exports.updateTeacher = async (req, res) => {

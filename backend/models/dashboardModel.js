@@ -43,25 +43,21 @@ exports.getRecentRegistrations = async () => {
         u.last_name, 
         u.role, 
         u.created_at,
-        CASE 
-          WHEN u.role = 'student' THEN sd.student_type
-          ELSE NULL 
-        END AS student_type,
-        CASE 
-          WHEN u.role = 'teacher' THEN td.teacher_type
-          ELSE NULL 
-        END AS teacher_type
+        sd.student_type AS student_type, -- Fetch student type for students
+        GROUP_CONCAT(r.name SEPARATOR ', ') AS teacher_roles -- Concatenate teacher roles
       FROM users u
-      LEFT JOIN student_details sd ON u.id = sd.student_id AND u.role = 'student'
-      LEFT JOIN teacher_details td ON u.id = td.teacher_id AND u.role = 'teacher'
+      LEFT JOIN student_details sd ON u.id = sd.student_id -- Join student_details for students
+      LEFT JOIN teacher_roles tr ON u.id = tr.teacher_id -- Join teacher_roles for teachers
+      LEFT JOIN roles r ON tr.role_id = r.id -- Fetch role names from roles table
+      WHERE u.role IN ('student', 'teacher') -- Filter only students and teachers
+      GROUP BY u.id -- Group by user ID to aggregate teacher roles
       ORDER BY u.created_at DESC 
       LIMIT 5
     `);
 
     return registrations;
   } catch (error) {
-    console.error("Error fetching recent registrations:", error);
-    throw error;
+    console.error("Error fetching recent registrations:", error.message);
+    throw new Error("Unable to fetch recent registrations. Please try again later.");
   }
 };
-

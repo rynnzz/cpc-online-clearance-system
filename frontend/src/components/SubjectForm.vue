@@ -1,12 +1,18 @@
 <template>
     <div class="space-y-4">
       <div>
-        <label class="block text-lg">Department</label>
-        <select v-model="formData.department" class="input input-bordered w-full bg-gray-700" required>
-            <option disabled value="">Select Department</option>
-          <option v-for="dept in departments" :key="dept" :value="dept">{{ dept }}</option>
-        </select>
-      </div>
+  <label class="block text-lg">Department</label>
+  <select
+    v-model="formData.department"
+    class="input input-bordered w-full bg-gray-700"
+    required
+  >
+    <option disabled value="">Select Department</option>
+    <option v-for="dept in departments" :key="dept.id" :value="dept.name">
+      {{ dept.name }}
+    </option>
+  </select>
+</div>
   
       <div class="flex space-x-4">
         <div class="flex-1">
@@ -62,22 +68,42 @@
   });
   
   const emit = defineEmits(['update:subjectData']);
+
+  const departments = [
+  { id: 1, name: 'BSIT' },
+  { id: 2, name: 'BEED' },
+  { id: 3, name: 'BSHM' },
+  { id: 4, name: 'BSED - MAJOR IN ENGLISH' },
+  { id: 5, name: 'BSED - MAJOR IN SCIENCE' },
+];
   
   // Create a computed property to manage two-way binding for form data
   const formData = computed({
-    get() {
-      return props.subjectData;
-    },
-    set(value) {
-      emit('update:subjectData', value);
-    }
-  });
+  get() {
+    const department = departments.find(
+      (dept) => dept.id === props.subjectData.department_id
+    )?.name;
 
-  console.log(formData.value);
+    return {
+      ...props.subjectData,
+      department, // Add the department name
+    };
+  },
+  set(value) {
+    // Map department name back to department_id before emitting
+    const departmentId = departments.find(
+      (dept) => dept.name === value.department
+    )?.id;
 
-  const departments = ['BSHM', 'BSIT', 'BSED - MAJOR IN SCIENCE', 'BSED - MAJOR IN ENGLISH', 'BEED']
+    emit("update:subjectData", {
+      ...value,
+      department_id: departmentId, // Replace department with department_id
+    });
+  },
+});
 
-  const schoolYears = ['2024-2025', '2026-2027', '2027-2028']
+
+  const schoolYears = ['2024-2025', '2026-2027', '2027-2028', '2028-2029', '2029-2030', '2030-2031']
   </script>
   
   <style scoped>

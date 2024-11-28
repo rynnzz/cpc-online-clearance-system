@@ -7,6 +7,7 @@ export const useSubjectStore = defineStore('subjectStore', {
     subjects: [],
     departments: [],
     isLoading: false,
+    currentSemester: '',
     error: null,
   }),
 
@@ -58,6 +59,27 @@ export const useSubjectStore = defineStore('subjectStore', {
       } catch (error) {
         console.error("Failed to update subject:", error);
         this.error = error;
+      }
+    },
+
+    async updateSemester(selectedSemester) {
+      try {
+        await subjectService.updateSemester(selectedSemester);
+        console.log("Subject semester updated successfully.");
+      } catch (error) {
+        console.error("Failed to update subject semester:", error);
+        this.error = error;
+      }
+    },
+
+    async getSemester() {
+      try {
+        const semester = await subjectService.getSemester();
+        return semester.data[0]?.semester; 
+      } catch (error) {
+        console.error("Failed to fetch subject semester:", error);
+        this.error = error;
+        return null;
       }
     },
 

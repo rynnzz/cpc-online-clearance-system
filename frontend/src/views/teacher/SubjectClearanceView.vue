@@ -1,11 +1,11 @@
 <template>
   <div class="flex min-h-screen w-full bg-gray-900 text-white">
     <main class="flex-1 bg-gray-900 w-full p-10">
-      <h1 class="text-4xl font-bold mb-6">Clearance View</h1>
+      <h1 class="text-4xl font-bold mb-6">Approve Clearance</h1>
 
-      <div v-for="subject in teacherInfo.subjects" :key="subject.course + subject.yearAndSection + subject.subjectName" class="card shadow-lg bg-gray-800 mb-8 p-6 rounded-lg">
+      <div v-for="subject in teacherInfo.subjects" :key="subject.course + subject.year + subject.subjectName" class="card shadow-lg bg-gray-800 mb-8 p-6 rounded-lg">
         <div class="mb-4">
-          <h2 class="text-2xl font-bold">Section: {{ subject.course }} - {{ subject.yearAndSection }}</h2>
+          <h2 class="text-2xl font-bold">Section: {{ subject.course }} - {{ subject.section }}</h2>
           <p class="text-xl text-gray-400">Subject: {{ subject.subjectName }}</p>
         </div>
 

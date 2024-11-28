@@ -7,20 +7,12 @@
       <div class="p-6 text-xl font-semibold">CPC Online Clearance</div>
 
          <!-- Admin Sidebar Menu -->
-         <ul v-if="userRole === 'admin'" class="space-y-4 px-6">
+         <ul v-if="userRole.includes('admin')" class="space-y-4 px-6">
         <!-- Dashboard -->
         <li :class="{ 'bg-gray-600': activeItem === 'dashboard' }" class="rounded-md transition duration-300 ease-in-out hover:bg-gray-600">
           <button @click="navigateTo('dashboard')" class="flex items-center w-full px-4 py-3 text-left text-lg">
             <i class="fas fa-tachometer-alt mr-5"></i>
             <span v-if="isOpen">Dashboard</span>
-          </button>
-        </li>
-        
-        <!-- Approve Requests -->
-        <li :class="{ 'bg-gray-600': activeItem === 'approve-requests' }" class="rounded-md transition duration-300 ease-in-out hover:bg-gray-600">
-          <button @click="navigateTo('approve-requests')" class="flex items-center w-full px-4 py-3 text-left text-lg">
-            <i class="fas fa-check-circle mr-5"></i>
-            <span v-if="isOpen">Approve Requests</span>
           </button>
         </li>
 
@@ -64,7 +56,7 @@
         </li>
       </ul>
 
-      <ul v-if="userRole === 'teacher'">
+      <ul v-if="userRole.includes('teacher')">
         <!-- Teacher-specific menu items -->
         <li 
           :class="['flex items-center px-6 py-3 hover:bg-gray-700 cursor-pointer text-lg', { 'bg-gray-600': activeItem === 'dashboard' }]"
@@ -75,15 +67,23 @@
         </li>
         
         <li 
-          :class="['flex items-center px-6 py-3 hover:bg-gray-700 cursor-pointer text-lg', { 'bg-gray-600': activeItem === 'approve-clearance' }]"
-          @click="navigateTo('approve-clearance')"
+          :class="['flex items-center px-6 py-3 hover:bg-gray-700 cursor-pointer text-lg', { 'bg-gray-600': activeItem === 'subject-clearance' }]"
+          @click="navigateTo('subject-clearance')"
         >
           <i class="fas fa-check-circle mr-3"></i> 
-          <span v-if="isOpen">Approve Clearance</span>
+          <span v-if="isOpen">Subject Clearance</span>
+        </li>
+
+        <li v-if="userRole.includes('teacher') && ['Department Head - BSIT', 'Department Head - BEED', 'Department Head - BSHM', 'Department Head - BSED', 'Accounting', 'Librarian', 'SAO/SSG Adviser', 'Guidance Counselor', 'Registrar', 'Clinic'].some(role => userRole.includes(role)) && !(['Full Time', 'Part Time'].every(role => userRole.length === 1 && userRole.includes(role)))"
+          :class="['flex items-center px-6 py-3 hover:bg-gray-700 cursor-pointer text-lg', { 'bg-gray-600': activeItem === 'administrative-clearance' }]"
+          @click="navigateTo('administrative-clearance')"
+        >
+        <i class="fa-solid fa-folder-open mr-3"></i>
+          <span v-if="isOpen">Administrative Clearance</span>
         </li>
       </ul>
 
-      <ul v-if="userRole === 'student'">
+      <ul v-if="userRole.includes('student')">
         <!-- Student-specific menu items -->
         <li 
           :class="['flex items-center px-6 py-3 hover:bg-gray-700 cursor-pointer text-lg', { 'bg-gray-600': activeItem === 'dashboard' }]"
@@ -99,14 +99,6 @@
         >
           <i class="fa-solid fa-newspaper mr-3"></i>
           <span v-if="isOpen">View Clearance</span>
-        </li>
-
-        <li 
-          :class="['flex items-center px-6 py-3 hover:bg-gray-700 cursor-pointer text-lg', { 'bg-gray-600': activeItem === 'upload-document' }]"
-          @click="navigateTo('upload-document')"
-        >
-          <i class="fa-regular fa-square-plus mr-3"></i>
-          <span v-if="isOpen">Upload Document</span>
         </li>
 
         <li 
@@ -141,14 +133,13 @@ const navigateTo = (item) => {
 
   const routes = {
     'dashboard': '/dashboard',
-    'approve-requests': '/approve-requests',
     'manage-subjects': '/manage-subjects',
     'teacher-accounts': '/manage-teacher-accounts',
     'student-accounts': '/manage-student-accounts',
     'view-clearance': '/view-clearance',
-    'upload-document': '/upload-document',
     'profile': '/profile',
-    'approve-clearance': '/approve-clearance',
+    'subject-clearance': '/subject-clearance',
+    'administrative-clearance': '/administrative-clearance',
 
   };
 
@@ -182,14 +173,13 @@ watch(
   (newPath) => {
     const pathToActiveItem = {
       '/dashboard': 'dashboard',
-      '/approve-requests': 'approve-requests',
       '/manage-subjects': 'manage-subjects',
       '/manage-teacher-accounts': 'teacher-accounts',
       '/manage-student-accounts': 'student-accounts',
       '/view-clearance': 'view-clearance',
-      '/upload-document': 'upload-document',
       '/profile': 'profile',
-      '/approve-clearance': 'approve-clearance',
+      '/subject-clearance': 'subject-clearance',
+      '/administrative-clearance': 'administrative-clearance'
     };
     activeItem.value = pathToActiveItem[newPath] || 'dashboard';
   }
@@ -199,14 +189,13 @@ watch(
 onMounted(() => {
   const pathToActiveItem = {
     '/dashboard': 'dashboard',
-    '/approve-requests': 'approve-requests',
     '/manage-subjects': 'manage-subjects',
     '/manage-teacher-accounts': 'teacher-accounts',
     '/manage-student-accounts': 'student-accounts',
     '/view-clearance': 'view-clearance',
-    '/upload-document': 'upload-document',
     '/profile': 'profile',
-    '/approve-clearance': 'approve-clearance',
+    '/subject-clearance': 'subject-clearance',
+    '/administrative-clearance': 'administrative-clearance'
   };
   activeItem.value = pathToActiveItem[route.path] || 'dashboard';
   authStore.initializeAuth();

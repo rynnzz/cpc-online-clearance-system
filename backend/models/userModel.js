@@ -25,3 +25,14 @@ exports.findTeacherSubjects = (teacherId) => {
 exports.findById = (id) => {
     return db.execute('SELECT * FROM users WHERE id = ?', [id]);
 };
+
+// Find roles assigned to a teacher
+exports.findTeacherRoles = (teacherId) => {
+    return db.execute(`
+        SELECT r.name as role_name 
+        FROM teacher_roles tr
+        JOIN roles r ON tr.role_id = r.id
+        WHERE tr.teacher_id = ?`,
+        [teacherId]
+    );
+};

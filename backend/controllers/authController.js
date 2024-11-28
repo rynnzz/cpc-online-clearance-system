@@ -24,29 +24,46 @@ exports.login = async (req, res) => {
           return res.status(400).json({ message: 'Invalid email or password' });
       }
 
+      let roles = [];
+      if (user[0].role === 'teacher') {
+          const [teacherRoles] = await User.findTeacherRoles(user[0].id);
+
+          roles = teacherRoles.map(role => role.role_name); // Extract role names
+      }
+
       // Create JWT token with user ID, role, and first_login status
       const token = jwt.sign(
-          { id: user[0].id, 
+          { 
+            id: user[0].id, 
             role: user[0].role, 
             isFirstLogin: user[0].first_login,
+            userRoles: [...new Set([user[0].role, ...roles])],
           },
           process.env.JWT_SECRET,
           { expiresIn: '1h' }
       );
 
-      // const [sections] = await User.findTeacherSections(user[0].id);
-
-      // const [subjects] = await User.findTeacherSubjects(user[0].id);
-
       // Prepare the response object
-      const response = { token }
-
+      const response = {
+        token,
+        user: {
+          id: user[0].id,
+          email: user[0].email,
+          firstName: user[0].first_name,
+          lastName: user[0].last_name,
+          userRoles: [...new Set([user[0].role, ...roles])], // Merge role and roles, ensuring uniqueness
+          firstLogin: user[0].first_login,
+        }
+      };
+      
+      console.log(response)
       return res.json(response);
   } catch (error) {
       console.error('Server error:', error);
       return res.status(500).json({ message: 'Server error' });
   }
 };
+
 
 
 exports.getUserInfo = async (req, res) => {

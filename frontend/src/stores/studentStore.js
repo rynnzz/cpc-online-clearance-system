@@ -6,7 +6,7 @@ export const useStudentStore = defineStore('studentStore', {
   state: () => ({
     students: [],
     isLoading: false,
-    currentTeacher: {}, 
+    currentStudent: {},
   }),
   actions: {
     async fetchStudents() {
@@ -28,8 +28,9 @@ export const useStudentStore = defineStore('studentStore', {
         const response = await studentService.getStudentInfo(studentId); // Pass the extracted userId to the service
 
         this.currentStudent = response.data; // Store the teacher info in the currentTeacher state
+        console.log(response)
       } catch (error) {
-        console.error("Failed to get Teacher Info", error);
+        console.error("Failed to get Student Info", error);
       }
     },
 
@@ -62,13 +63,9 @@ export const useStudentStore = defineStore('studentStore', {
       }
     },
 
-    async updateStudent(student) {
+    async updateStudent(id, student) {
       try {
-        await studentService.updateStudent(student.id, student); // Update Student information
-        const index = this.students.findIndex(t => t.id === student.id);
-        if (index !== -1) {
-          this.students[index] = { ...student }; // Update the Student in the list
-        }
+        await studentService.updateStudent(id, student); // Update Student information
       } catch (error) {
         console.error("Failed to update Student:", error);
       }

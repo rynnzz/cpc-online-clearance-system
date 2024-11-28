@@ -13,12 +13,6 @@
                 <input v-model="newTeacher.last_name" type="text" placeholder="Last Name" class="input input-bordered w-full bg-gray-800 text-gray-200 placeholder-gray-400" required />
                 <input v-model="newTeacher.email" type="email" placeholder="Email Address" class="input input-bordered w-full bg-gray-800 text-gray-200 placeholder-gray-400" required />
                 <input v-model="newTeacher.password" type="password" placeholder="Password" class="input input-bordered w-full bg-gray-800 text-gray-200 placeholder-gray-400" required />
-                <select v-model="newTeacher.teacher_type" class="input input-bordered w-full bg-gray-800 text-gray-200 placeholder-gray-400" required>
-                  <option value="" disabled>Select Teacher Type</option>
-                  <option value="Full Time">Full Time</option>
-                  <option value="Part Time">Part Time</option>
-                  <option value="Guest">Guest</option>
-                </select>
               </div>
             </div>
           </div>
@@ -51,7 +45,6 @@ const newTeacher = ref({
   last_name: '',
   email: '',
   password: '',
-  teacher_type: '',
 });
 
 const message = ref('');
@@ -88,7 +81,6 @@ const resetForm = () => {
     last_name: '',
     email: '',
     password: '',
-    teacher_type: '',
   };
 };
 </script>

@@ -21,6 +21,7 @@ export default {
   updateSubject(subjectId, updatedData) {
     return axios.put(`${API_URL}/${subjectId}`, updatedData);
   },
+  
 
   deleteSubject(subjectId) {
     return axios.delete(`${API_URL}/${subjectId}`);

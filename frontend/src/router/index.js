@@ -1,6 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router';
 import LoginView from '../views/auth/LoginView.vue';
-import UnauthorizedView from '../views/UnauthorizedView.vue'; // Import UnauthorizedView
+import UnauthorizedView from '../views/UnauthorizedView.vue';
 import { decodeJwt } from 'jose';
 import { useAuthStore } from '@/stores/authStore';
 
@@ -18,12 +18,6 @@ const router = createRouter({
       name: 'dashboard',
       component: () => import('../views/DashboardView.vue'),
       meta: { requiresAuth: true }
-    },
-    {
-      path: '/approve-requests',
-      name: 'approve-requests',
-      component: () => import('../views/admin/ApproveRequestsView.vue'),
-      meta: { requiresAuth: true, allowedRoles: ['admin'] }
     },
     {
       path: '/manage-subjects',
@@ -50,22 +44,22 @@ const router = createRouter({
       meta: { requiresAuth: true, allowedRoles: ['student'] }
     },
     {
-      path: '/upload-document',
-      name: 'upload-document',
-      component: () => import('../views/student/UploadDocumentView.vue'),
-      meta: { requiresAuth: true, allowedRoles: ['student'] }
-    },
-    {
       path: '/profile',
       name: 'profile',
       component: () => import('../views/student/StudentProfileView.vue'),
       meta: { requiresAuth: true, allowedRoles: ['student'] }
     },
     {
-      path: '/approve-clearance',
-      name: 'approve-clearance',
-      component: () => import('../views/teacher/ApproveClearanceView.vue'),
-      meta: { requiresAuth: true, allowedRoles: ['teacher'] }
+      path: '/subject-clearance',
+      name: 'subject-clearance',
+      component: () => import('../views/teacher/SubjectClearanceView.vue'),
+      meta: { requiresAuth: true, allowedRoles: ['teacher', 'Department Head - BSIT'] }
+    },
+    {
+      path: '/administrative-clearance',
+      name: 'administrative-clearance',
+      component: () => import('../views/teacher/AdministrativeClearanceView.vue'),
+      meta: { requiresAuth: true, allowedRoles: ['teacher', 'Department Head - BSIT'] }
     },
     {
       path: '/unauthorized',
@@ -92,10 +86,10 @@ function isTokenValid(token) {
   if (!token) return false;
 
   try {
-    const { exp } = decodeJwt(token); // Decode the JWT
-    return Date.now() < exp * 1000; // Check if the token is still valid
+    const { exp } = decodeJwt(token);
+    return Date.now() < exp * 1000;
   } catch (e) {
-    return false; // Token is invalid or decoding failed
+    return false;
   }
 }
 
@@ -103,20 +97,19 @@ function isTokenValid(token) {
 router.beforeEach((to, from, next) => {
   const authStore = useAuthStore();
   const token = authStore.token || localStorage.getItem('token');
-  const userRole = authStore.userRole; // Assume user role is stored in authStore
+  const userRole = authStore.userRole;
 
   if (to.matched.some(record => record.meta.requiresAuth)) {
     if (!isTokenValid(token)) {
-      authStore.logout(); // Optionally clear token from store
+      authStore.logout();
       next({ name: 'login' });
-    } else if (to.meta.allowedRoles && !to.meta.allowedRoles.includes(userRole)) {
-      // If the user role is not allowed, redirect to the unauthorized page
+    } else if (to.meta.allowedRoles && !to.meta.allowedRoles.some(role => userRole.includes(role))) {
       next({ name: 'unauthorized' });
     } else {
-      next(); // Proceed to the route if the role matches
+      next();
     }
   } else if (to.matched.some(record => record.meta.requiresGuest) && isTokenValid(token)) {
-    next({ name: 'page-not-found' });
+    next({ name: 'dashboard' });
   } else {
     next();
   }

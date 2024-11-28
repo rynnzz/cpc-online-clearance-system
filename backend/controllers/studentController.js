@@ -34,7 +34,8 @@ exports.bulkAddStudents = async (req, res) => {
             email: row['Email'],
             password: row['Password'],
             course: row['Course'],
-            year_and_section: row['Year and Section'],
+            year: row['Year Level'],
+            section: row['Section'],
             student_type: row['Student Type']
         }));
 
@@ -78,7 +79,7 @@ exports.getStudentInfo = async (req, res) => {
         const [user] = await studentModel.getStudentInfo(id);
 
         if (user.length === 0) {
-            return res.status(404).json({ message: 'User not found' });
+            return res.status(404).json({ message: 'Student not found' });
         }
 
         // Organize data by sections and subjects
@@ -86,14 +87,15 @@ exports.getStudentInfo = async (req, res) => {
         const sectionMap = {};
 
         user.forEach(item => {
-            const sectionKey = `${item.course}-${item.year_and_section}`;
+            const sectionKey = `${item.course}-${item.year}-${item.section}`;
 
             // Check if this section already exists in the map
             if (!sectionMap[sectionKey]) {
                 // Initialize entry in the map
                 sectionMap[sectionKey] = {
                     course: item.course,
-                    yearAndSection: item.year_and_section,
+                    year: item.year,
+                    section: item.section,
                     subjects: []
                 };
                 sections.push(sectionMap[sectionKey]);
@@ -104,6 +106,8 @@ exports.getStudentInfo = async (req, res) => {
                 subjectName: item.subject_name,
                 subjectCode: item.subject_code,
                 units: item.subject_units,
+                semester: item.semester,
+                schoolYear: item.school_year,
                 status: item.clearance_status || 'Pending', // Default to 'Pending' if no status
                 signature: item.clearance_status === 'Approved' ? item.teacher_signature : null // Include signature if status is 'Approved'
             });
@@ -121,13 +125,10 @@ exports.getStudentInfo = async (req, res) => {
             sections: sections
         });
     } catch (error) {
-        console.error('Error fetching user info:', error);
+        console.error('Error fetching student info:', error);
         res.status(500).json({ message: 'Server error' });
     }
 };
-
-
-
 
 
 
@@ -142,6 +143,8 @@ exports.updateStudent = async (req, res) => {
         res.status(500).json({ error: err.message });
     }
 };
+
+
 
 // Delete a student
 exports.deleteStudent = async (req, res) => {

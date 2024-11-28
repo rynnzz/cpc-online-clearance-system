@@ -1,7 +1,7 @@
 <template>
   <div class="w-full">
     <!-- Admin Dashboard -->
-    <div v-if="userRole === 'admin'" class="p-8 bg-gray-900 text-gray-100 min-h-screen">
+    <div v-if="userRole.includes('admin')" class="p-8 bg-gray-900 text-gray-100 min-h-screen">
       <h1 class="text-4xl font-bold mb-6">Admin Dashboard</h1>
 
       <!-- Summary Cards for Admin -->
@@ -58,7 +58,7 @@
     </div>
     
     <!-- Teacher Dashboard -->
-    <div v-if="userRole === 'teacher'" class="p-8 bg-gray-900 text-gray-100 min-h-screen">
+    <div v-if="userRole.includes('teacher')" class="p-8 bg-gray-900 text-gray-100 min-h-screen">
       <h1 class="text-4xl font-bold mb-6">Teacher Dashboard</h1>
 
       <!-- Summary Cards for Teacher -->
@@ -153,7 +153,7 @@
       </div>
     </div>
 
-    <div v-if="userRole === 'student'" class="p-8 bg-gray-900 text-gray-100 min-h-screen">
+    <div v-if="userRole.includes('student')" class="p-8 bg-gray-900 text-gray-100 min-h-screen">
       <h1 class="text-4xl font-bold mb-6">Student Dashboard</h1>
 
       <!-- Summary Cards for Student -->
@@ -214,12 +214,7 @@
     <FirstTimeSetupTeacher 
       :isOpen="isFirstTimeSetupTeacherOpen"
       :closeModal="closeFirstTimeModalTeacher"  
-      v-if="userRole === 'teacher' && isFirstTimeSetupTeacherOpen"
-    />
-    <FirstTimeSetupStudent
-      :isOpen="isFirstTimeSetupStudentOpen"
-      :closeModal="closeFirstTimeModalStudent"
-      v-if="userRole === 'student' && isFirstTimeSetupStudentOpen"
+      v-if="userRole.includes('teacher') && isFirstTimeSetupTeacherOpen"
     />
   </div>
 </template>
@@ -227,7 +222,6 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue';
 import FirstTimeSetupTeacher from '@/components/FirstTimeSetupTeacher.vue';
-import FirstTimeSetupStudent from '@/components/FirstTimeSetupStudent.vue';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '@/stores/authStore';
 import { useDashboardStore } from '@/stores/dashboardStore';
@@ -275,26 +269,19 @@ const studentDashboardData = ref({
 
 // Modal open state based on firstLogin status
 const isFirstTimeSetupTeacherOpen = ref(false);
-const isFirstTimeSetupStudentOpen = ref(false);
 
 onMounted(() => {
   dashboardStore.initializeDashboard();
+  authStore.initializeAuth();
   const storedFirstLogin = localStorage.getItem('isFirstLogin')
-  if (userRole.value === 'teacher' && storedFirstLogin === '1') {
+  if (userRole.value.includes('teacher') && storedFirstLogin === '1') {
     isFirstTimeSetupTeacherOpen.value = true;
-  } else if (userRole.value === 'student' && storedFirstLogin === '1') {
-    isFirstTimeSetupStudentOpen.value = true;
   }
 });
 
 // Close the teacher setup modal
 const closeFirstTimeModalTeacher = () => {
   isFirstTimeSetupTeacherOpen.value = false;
-};
-
-// Close the student setup modal
-const closeFirstTimeModalStudent = () => {
-  isFirstTimeSetupStudentOpen.value = false;
 };
 
 // Navigate to different management pages

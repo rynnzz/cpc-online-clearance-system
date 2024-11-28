@@ -38,7 +38,6 @@
           <th class="p-4 text-sm text-left">#</th>
           <th class="p-4 text-sm text-left">Full Name</th>
           <th class="p-4 text-sm text-left">Email</th>
-          <th class="p-4 text-sm text-left">Teacher Type</th>
           <th class="p-4 text-sm text-left">Actions</th>
         </tr>
       </thead>
@@ -50,7 +49,6 @@
           <td class="p-4 text-sm"> {{ index + 1 }}</td>
           <td class="p-4 text-sm">{{ teacher.last_name }}, {{ teacher.first_name }} {{ teacher.middle_name }}</td>
           <td class="p-4 text-sm">{{ teacher.email }}</td>
-          <td class="p-4 text-sm">{{ teacher.teacher_type }}</td>
           <td class="p-4 flex flex-col sm:flex-row sm:space-x-2 space-y-2 sm:space-y-0">
             <button @click="openSubjectsModal(teacher.yearSectionSubjects)" class="btn btn-info text-xs sm:text-sm">Subjects</button>
             <button @click="openEditModal(teacher)" class="btn btn-warning text-xs sm:text-sm"><i class="fas fa-edit"></i></button>

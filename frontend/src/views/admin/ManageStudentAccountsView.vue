@@ -38,7 +38,8 @@
           <th>Full Name</th>
           <th>Email</th>
           <th>Course</th>
-          <th>Year and Section</th>
+          <th>Section</th>
+          <th>Year Level</th>
           <th>Student Type</th>
           <th>Actions</th>
         </tr>
@@ -49,14 +50,15 @@
           <td>{{ (currentPage - 1) * pageSize + index + 1 }}</td>
           <td>{{ student.first_name }} {{ student.middle_name }} {{ student.last_name }}</td>
           <td>{{ student.email }}</td>
-          <td>{{ student.course || "Not Set-up yet" }}</td>
-          <td>{{ student.year_and_section || "Not Set-up yet" }}</td>
+          <td>{{ student.course }}</td>
+          <td>{{ student.section }}</td>
+          <td>{{ student.year }}</td>
           <td>{{ student.student_type }}</td>
           <td class="flex space-x-2">
             <button @click="editStudent(student)" class="btn btn-warning">
               <i class="fas fa-edit"></i>
             </button>
-            <button @click="openConfirmationModal(student.id)" class="btn btn-error">
+            <button @click="openConfirmationModal(student.student_id)" class="btn btn-error">
               <i class="fas fa-trash"></i>
             </button>
           </td>
@@ -73,28 +75,177 @@
 
     <!-- Add Student Modal -->
     <div v-if="isAddModalOpen" class="modal modal-open">
-      <div class="modal-box bg-gray-800 text-white">
-        <h2 class="text-2xl font-semibold mb-4">Add Student</h2>
-        <form @submit.prevent="handleAddStudent">
-          <div class="space-y-4">
-            <input v-model="newStudent.first_name" type="text" placeholder="First Name" class="input input-bordered w-full bg-gray-700" required />
-            <input v-model="newStudent.middle_name" type="text" placeholder="Middle Name" class="input input-bordered w-full bg-gray-700" required />
-            <input v-model="newStudent.last_name" type="text" placeholder="Last Name" class="input input-bordered w-full bg-gray-700" required />
-            <input v-model="newStudent.email" type="email" placeholder="Email" class="input input-bordered w-full bg-gray-700" required />
-            <input v-model="newStudent.password" type="password" placeholder="Password" class="input input-bordered w-full bg-gray-700" required />
-            <select v-model="newStudent.student_type" class="select select-bordered w-full bg-gray-700" required>
-              <option value="" disabled>Select Student Type</option>
-              <option value="Regular">Regular</option>
-              <option value="Irregular">Irregular</option>
-            </select>
-          </div>
-          <div class="modal-action mt-4">
-            <button type="button" class="btn btn-secondary" @click="closeAddModal">Cancel</button>
-            <button type="submit" class="btn btn-primary">Add Student</button>
-          </div>
-        </form>
+  <div class="modal-box bg-gray-800 text-white w-full max-w-4xl">
+    <h2 class="text-2xl font-semibold mb-4">Add Student</h2>
+    <form @submit.prevent="handleAddStudent">
+      <div class="grid grid-cols-2 gap-4">
+        <!-- Row 1 -->
+        <div class="col-span-1">
+          <input v-model="newStudent.first_name" type="text" placeholder="First Name" class="input input-bordered w-full bg-gray-700" required />
+        </div>
+        <div class="col-span-1">
+          <input v-model="newStudent.middle_name" type="text" placeholder="Middle Name" class="input input-bordered w-full bg-gray-700" required />
+        </div>
+        <!-- Row 2 -->
+        <div class="col-span-1">
+          <input v-model="newStudent.last_name" type="text" placeholder="Last Name" class="input input-bordered w-full bg-gray-700" required />
+        </div>
+        <div class="col-span-1">
+          <input v-model="newStudent.email" type="email" placeholder="Email" class="input input-bordered w-full bg-gray-700" required />
+        </div>
+        <!-- Row 3 -->
+        <div class="col-span-1">
+          <select v-model="newStudent.course" class="select select-bordered w-full bg-gray-700" required>
+            <option value="" disabled>Select Course</option>
+            <option value="BSIT">BSIT</option>
+            <option value="BSHM">BSHM</option>
+            <option value="BEED">BEED</option>
+            <option value="BSED - MAJOR IN ENGLISH">BSED - MAJOR IN ENGLISH</option>
+            <option value="BSED - MAJOR IN SCIENCE">BSED - MAJOR IN SCIENCE</option>
+          </select>
+        </div>
+        <div class="col-span-1">
+          <select v-model="newStudent.year" class="select select-bordered w-full bg-gray-700" required>
+            <option value="" disabled>Select Year</option>
+            <option value="1st Year">1st Year</option>
+            <option value="2nd Year">2nd Year</option>
+            <option value="3rd Year">3rd Year</option>
+            <option value="4th Year">4th Year</option>
+          </select>
+        </div>
+        <!-- Row 4 -->
+        <div class="col-span-1">
+          <input v-model="newStudent.section" type="text" placeholder="Section (e.g., 1A)" class="input input-bordered w-full bg-gray-700" required />
+        </div>
+        <div class="col-span-1">
+          <input v-model="newStudent.password" type="password" placeholder="Password" class="input input-bordered w-full bg-gray-700" required />
+        </div>
+        <!-- Row 5 -->
+        <div class="col-span-2">
+          <select v-model="newStudent.student_type" class="select select-bordered w-full bg-gray-700" required>
+            <option value="" disabled>Select Student Type</option>
+            <option value="Regular">Regular</option>
+            <option value="Irregular">Irregular</option>
+          </select>
+        </div>
       </div>
-    </div>
+      <div class="modal-action mt-4">
+        <button type="button" class="btn btn-secondary" @click="closeAddModal">Cancel</button>
+        <button type="submit" class="btn btn-primary">Add Student</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+
+<div v-if="isEditModalOpen" class="modal modal-open flex justify-center items-center">
+  <div class="modal-box bg-gray-800 text-white max-w-4xl w-full rounded-lg shadow-lg">
+    <h2 class="text-3xl font-semibold mb-6 text-center">Edit Student</h2>
+    <form @submit.prevent="handleEditStudent">
+      <div class="grid grid-cols-2 gap-6">
+        <!-- First Column -->
+        <div class="space-y-4">
+          <input 
+            v-model="editedStudent.first_name" 
+            type="text" 
+            placeholder="First Name" 
+            class="input input-bordered w-full bg-gray-700" 
+            required 
+          />
+          <input 
+            v-model="editedStudent.middle_name" 
+            type="text" 
+            placeholder="Middle Name" 
+            class="input input-bordered w-full bg-gray-700" 
+          />
+          <input 
+            v-model="editedStudent.last_name" 
+            type="text" 
+            placeholder="Last Name" 
+            class="input input-bordered w-full bg-gray-700" 
+            required 
+          />
+          <input 
+            v-model="editedStudent.email" 
+            type="email" 
+            placeholder="Email" 
+            class="input input-bordered w-full bg-gray-700" 
+            required 
+          />
+        </div>
+
+        <!-- Second Column -->
+        <div class="space-y-4">
+          <input 
+            v-model="editedStudent.password" 
+            type="password" 
+            placeholder="Password (Optional)" 
+            class="input input-bordered w-full bg-gray-700" 
+          />
+          <select 
+            v-model="editedStudent.course" 
+            class="select select-bordered w-full bg-gray-700" 
+            required
+          >
+            <option value="" disabled>Select Course</option>
+            <option value="BSIT">BSIT</option>
+            <option value="BSHM">BSHM</option>
+            <option value="BEED">BEED</option>
+            <option value="BSED - English">BSED - English</option>
+            <option value="BSED - Science">BSED - Science</option>
+          </select>
+          <select 
+            v-model="editedStudent.year" 
+            class="select select-bordered w-full bg-gray-700" 
+            required
+          >
+            <option value="" disabled>Select Year</option>
+            <option value="1st Year">1st Year</option>
+            <option value="2nd Year">2nd Year</option>
+            <option value="3rd Year">3rd Year</option>
+            <option value="4th Year">4th Year</option>
+          </select>
+          <input 
+            v-model="editedStudent.section" 
+            type="text" 
+            placeholder="Section" 
+            class="input input-bordered w-full bg-gray-700" 
+            required 
+          />
+        </div>
+      </div>
+
+      <div class="mt-6">
+        <select 
+          v-model="editedStudent.student_type" 
+          class="select select-bordered w-full bg-gray-700" 
+          required
+        >
+          <option value="" disabled>Select Student Type</option>
+          <option value="Regular">Regular</option>
+          <option value="Irregular">Irregular</option>
+        </select>
+      </div>
+
+      <div class="modal-action mt-6 flex justify-end">
+        <button 
+          type="button" 
+          class="btn btn-secondary px-6 py-2 text-sm" 
+          @click="closeEditModal"
+        >
+          Cancel
+        </button>
+        <button 
+          type="submit" 
+          class="btn btn-primary px-6 py-2 text-sm ml-4"
+        >
+          Save Changes
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
 
     <!-- Bulk Add Modal -->
     <div v-if="isBulkAddModalOpen" class="modal modal-open">
@@ -134,7 +285,7 @@ import { useStudentStore } from '@/stores/studentStore'
 
 const studentStore = useStudentStore()
 
-const newStudent = ref({ first_name: '', middle_name: '', last_name: '', email: '', password: '', course: '', year_and_section: '', student_type: '' })
+const newStudent = ref({ first_name: '', middle_name: '', last_name: '', email: '', password: '', course: '', year: '', section:'', student_type: '' })
 const isAddModalOpen = ref(false)
 const isBulkAddModalOpen = ref(false)
 const searchQuery = ref('')
@@ -142,6 +293,8 @@ const file = ref(null)
 const selectedStudents = ref([])
 const isConfirmationModalOpen = ref(false);
 const studentIdToDelete = ref(null);
+const isEditModalOpen = ref(false);
+const editedStudent = ref({});
 
 const currentPage = ref(1)
 const pageSize = ref(10)
@@ -190,6 +343,27 @@ const selectAll = (event) => {
   selectedStudents.value = event.target.checked ? paginatedStudents.value.map(student => student.id) : []
 }
 
+const editStudent = (student) => {
+  editedStudent.value = { ...student }; // Copy the selected student data
+  isEditModalOpen.value = true;
+};
+
+const closeEditModal = () => {
+  isEditModalOpen.value = false;
+};
+
+const handleEditStudent = async () => {
+  try {
+    await studentStore.updateStudent(editedStudent.value.student_id, editedStudent.value);
+    await studentStore.fetchStudents(); // Fetch updated student data to reflect the changes in the table
+    alert("Student details updated successfully.");
+    closeEditModal();
+  } catch (error) {
+    console.error("Error updating student:", error);
+  }
+};
+
+
 // Bulk delete function
 const bulkDelete = async () => {
   if (selectedStudents.value.length === 0) return
@@ -220,6 +394,7 @@ const deleteStudent = async (id) => {
     await studentStore.deleteStudent(id);
     await studentStore.fetchStudents();
     alert("Student deleted successfully.");
+    closeConfirmationModal()
   } catch (error) {
     console.error('Error deleting student:', error);
   }

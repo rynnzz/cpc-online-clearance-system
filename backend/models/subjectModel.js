@@ -34,7 +34,7 @@ exports.getAllSubjectsAndDepartments = async ({ department, year, school_year, s
 
 
 // Add a new subject
-exports.addSubject = async ({ name, code, units, department, year, schoolYear, semester }) => {
+exports.addSubject = async ({ name, code, units, department, year, school_year, semester }) => {
   // Get the department ID, inserting the department if it doesn’t exist
   const [existingDepartment] = await db.execute(
     `SELECT id FROM departments WHERE name = ?`,
@@ -58,7 +58,7 @@ exports.addSubject = async ({ name, code, units, department, year, schoolYear, s
       INSERT INTO subjects (name, code, units, department_id, year, school_year, semester)
       VALUES (?, ?, ?, ?, ?, ?, ?)
     `,
-    [name, code, units, departmentId, year, schoolYear, semester]
+    [name, code, units, departmentId, year, school_year, semester]
   );
 };
 

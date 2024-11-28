@@ -13,12 +13,6 @@
                 <input v-model="currentTeacher.last_name" type="text" placeholder="Last Name" class="input input-bordered w-full" required />
                 <input v-model="currentTeacher.email" type="email" placeholder="Email Address" class="input input-bordered w-full" required />
                 <input v-model="currentTeacher.password" type="password" placeholder="Password" class="input input-bordered w-full" /> <!-- Optional -->
-                <select v-model="currentTeacher.teacher_type" class="input input-bordered w-full" required>
-                  <option value="" disabled>Select Teacher Type</option>
-                  <option value="Full Time">Full Time</option>
-                  <option value="Part Time">Part Time</option>
-                  <option value="Guest">Guest</option>
-                </select>
               </div>
             </div>
           </div>
@@ -98,7 +92,6 @@ const currentTeacher = ref({
   last_name: '',
   email: '',
   password: '',
-  teacher_type: '',
   yearSectionSubjects: []
 });
 
@@ -131,6 +124,7 @@ const handleEditTeacher = async () => {
     // Update the teacher and the year section subjects
     await teacherStore.updateTeacher(currentTeacher.value); 
     message.value = 'Teacher updated successfully!';
+    location.reload()
     resetForm(); // Reset form after submission
     props.closeModal(); // Close modal on success
   } catch (err) {
@@ -197,7 +191,6 @@ const resetForm = () => {
     last_name: '',
     email: '',
     password: '',
-    teacher_type: '',
     yearSectionSubjects: [] // Reset to an empty array
   };
   searchQueries.value = [];
