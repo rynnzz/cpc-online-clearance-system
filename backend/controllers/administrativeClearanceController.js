@@ -4,8 +4,6 @@ const administrativeClearanceModel = require('../models/administrativeClearanceM
 exports.updateAdministrativeClearanceStatus = async (req, res) => {
     try {
         const { studentId, departmentId, sectionId, status } = req.body;
-        console.log(req.body);
-
         // Call the model to update the status
         await administrativeClearanceModel.updateClearanceStatus(studentId, departmentId, sectionId, status);
 

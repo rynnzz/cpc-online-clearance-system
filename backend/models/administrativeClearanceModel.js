@@ -30,25 +30,3 @@ exports.updateClearanceStatus = async (studentId, departmentId, sectionId, statu
         `, [studentId, departmentId, sectionId, status]);
     }
 };
-
-exports.getClearanceStatus = async (studentId, departmentId, sectionId) => {
-    try {
-        const [rows] = await db.execute(`
-            SELECT 
-                acs.student_id, 
-                acs.department_id, 
-                acs.section_id, 
-                acs.status,
-                d.name AS department_name,
-                s.section AS section_name,
-                acs.updated_at
-            FROM administrative_clearance_status acs
-            LEFT JOIN departments d ON acs.department_id = d.id
-            LEFT JOIN sections s ON acs.section_id = s.id
-            WHERE acs.student_id = ? AND acs.department_id = ? AND acs.section_id = ?
-        `, [studentId, departmentId, sectionId]);
-        return rows;
-    } catch (error) {
-        throw new Error('Failed to fetch clearance status: ' + error.message);
-    }
-};

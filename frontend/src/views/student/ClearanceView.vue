@@ -61,7 +61,7 @@
 
           <!-- Non-Teaching Staff Clearance Section -->
           <div class="mb-8">
-            <h2 class="text-2xl font-semibold mb-4">Non-Teaching Staff Clearance</h2>
+            <h2 class="text-2xl font-semibold mb-4">Administrative Clearance</h2>
             <div class="overflow-x-auto">
               <table class="table w-full bg-gray-800 text-white rounded-lg shadow-lg">
                 <thead>
@@ -106,9 +106,6 @@
     </div>
   </div>
 </template>
-
-
-
 
 <script setup>
 import { useStudentStore } from '@/stores/studentStore';

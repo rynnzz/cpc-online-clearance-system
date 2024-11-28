@@ -5,6 +5,4 @@ const administrativeClearanceController = require('../controllers/administrative
 // Route to update administrative clearance status
 router.post('/update', administrativeClearanceController.updateAdministrativeClearanceStatus);
 
-router.get('/:id/get-clearance-status', administrativeClearanceController.getClearanceStatus)
-
 module.exports = router;
