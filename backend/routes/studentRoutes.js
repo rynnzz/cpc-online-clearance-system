@@ -15,8 +15,11 @@ router.post('/bulk-add', upload.single('file'), studentController.bulkAddStudent
 
 router.get('/:id/get-student-info', studentController.getStudentInfo)
 
+router.get('/:id/get-administrative-clearance', studentController.getAdministrativeClearanceStatus)
+
 router.post('/:id/add-subject', studentController.addSubject)
 
+router.get('/cleared-students', studentController.getClearedStudents)
 // Update a student
 router.put('/:id', studentController.updateStudent);
 

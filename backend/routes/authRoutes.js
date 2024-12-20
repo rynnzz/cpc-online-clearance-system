@@ -10,4 +10,6 @@ router.get('/dashboard', authMiddleware, (req, res) => {
   });
 router.get('/user-info', authMiddleware, authController.getUserInfo);
 
+router.put('/:userId/change-password', authController.updatePassword)
+
 module.exports = router;

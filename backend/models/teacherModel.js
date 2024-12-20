@@ -7,7 +7,7 @@ exports.getAllTeachers = async (role, page = 1, limit = 50000) => {
     try {
         const offset = (page - 1) * limit;
 
-        // Fetch the teacher details with subjects and sections
+        // Fetch the teacher details with roles, subjects, and sections
         const [rows] = await db.execute(
             `
             SELECT 
@@ -16,16 +16,19 @@ exports.getAllTeachers = async (role, page = 1, limit = 50000) => {
                 u.middle_name, 
                 u.last_name, 
                 u.email, 
-                u.role, 
-                sec.course,
-                sec.year,
+                sec.course, 
+                sec.year, 
                 sec.section,
-                s.name AS subject_name
+                s.name AS subject_name,
+                GROUP_CONCAT(r.name SEPARATOR ', ') AS roles
             FROM users u
+            LEFT JOIN teacher_roles tr ON tr.teacher_id = u.id
+            LEFT JOIN roles r ON tr.role_id = r.id
             LEFT JOIN teacher_subjects tsub ON tsub.teacher_id = u.id
             LEFT JOIN sections sec ON sec.id = tsub.section_id
             LEFT JOIN subjects s ON s.id = tsub.subject_id
             WHERE u.role = ?
+            GROUP BY u.id, sec.course, sec.year, sec.section, s.name
             LIMIT ? OFFSET ?
             `,
             [role, limit, offset]
@@ -55,23 +58,27 @@ exports.getAllTeachers = async (role, page = 1, limit = 50000) => {
                     middle_name: row.middle_name,
                     last_name: row.last_name,
                     email: row.email,
-                    role: row.role,
+                    roles: row.roles ? row.roles.split(', ') : [], // Split roles into an array
                     yearSectionSubjects: [],
                 };
             }
 
             // Add year and section if it exists
-            if (row.year_and_section) {
+            if (row.course && row.year && row.section) {
                 // Check for the existing course and year/section combination
                 let yearSection = acc[teacherId].yearSectionSubjects.find(
-                    ys => ys.course === row.course && ys.year_and_section === row.year_and_section
+                    ys =>
+                        ys.course === row.course &&
+                        ys.year === row.year &&
+                        ys.section === row.section
                 );
 
                 // If not found, create a new entry
                 if (!yearSection) {
                     yearSection = {
                         course: row.course,
-                        year_and_section: row.year_and_section,
+                        year: row.year,
+                        section: row.section,
                         subjects: [],
                     };
                     acc[teacherId].yearSectionSubjects.push(yearSection);
@@ -104,16 +111,19 @@ exports.getAllTeachers = async (role, page = 1, limit = 50000) => {
 };
 
 
+
 exports.getTeacherInfo = async (id) => {
     return db.execute(`
-        SELECT 
+        SELECT DISTINCT
             u.id AS teacher_id, 
             u.first_name, 
             u.middle_name, 
             u.last_name, 
             u.email, 
-            u.role, 
-            dep.name AS course_name, -- Fetch course name from departments table
+            u.role AS user_role,
+            tr.role_id AS teacher_role_id, 
+            r.name AS teacher_role_name,
+            dep.name AS course_name, 
             sec.year,
             sec.section,
             sec.id AS section_id,
@@ -124,9 +134,11 @@ exports.getTeacherInfo = async (id) => {
             su.last_name AS student_last_name,
             COALESCE(cs.status, 'Pending') AS clearance_status
         FROM users u
+        LEFT JOIN teacher_roles tr ON tr.teacher_id = u.id
+        LEFT JOIN roles r ON r.id = tr.role_id
         LEFT JOIN teacher_sections ts ON ts.teacher_id = u.id
         LEFT JOIN sections sec ON sec.id = ts.section_id
-        LEFT JOIN departments dep ON sec.course = dep.id -- Join departments table for course name
+        LEFT JOIN departments dep ON sec.course = dep.id
         LEFT JOIN teacher_subjects tsub ON tsub.teacher_id = u.id AND tsub.section_id = sec.id
         LEFT JOIN subjects s ON s.id = tsub.subject_id
         LEFT JOIN student_sections ss ON ss.section_id = sec.id
@@ -135,9 +147,13 @@ exports.getTeacherInfo = async (id) => {
         LEFT JOIN clearance_status cs ON cs.student_id = ss.student_id AND cs.subject_id = s.id AND cs.section_id = sec.id
         WHERE u.role = 'teacher' 
           AND u.id = ?
+        GROUP BY
+            teacher_id, course_name, year, section_id, subject_id, ss.student_id
         ORDER BY dep.name, sec.year, s.name, su.last_name, su.first_name;
     `, [id]);
 };
+
+
 
 // Model: Handle insertion of sections and updating signature
 exports.addYearSection = async (data) => {
@@ -154,9 +170,16 @@ exports.addYearSection = async (data) => {
         );
 
         if (!existingTeacher) {
+            // Insert teacher with the signature
             await connection.execute(
                 `INSERT INTO teacher_details (teacher_id, signature) VALUES (?, ?)`,
-                [teacher_id, signature || null]
+                [teacher_id, signature]
+            );
+        } else {
+            // Update signature if it exists but is missing
+            await connection.execute(
+                `UPDATE teacher_details SET signature = ? WHERE teacher_id = ?`,
+                [signature, teacher_id]
             );
         }
 
@@ -167,19 +190,23 @@ exports.addYearSection = async (data) => {
                 roles
             );
 
+            // Find missing roles
             const missingRoles = roles.filter(
                 (role) => !roleRecords.some((record) => record.name === role)
             );
 
+            // Insert missing roles into roles table
             for (const role of missingRoles) {
                 await connection.execute(`INSERT INTO roles (name) VALUES (?)`, [role]);
             }
 
+            // Fetch all updated roles
             const [updatedRoles] = await connection.execute(
                 `SELECT id, name FROM roles WHERE name IN (${roles.map(() => '?').join(',')})`,
                 roles
             );
 
+            // Assign roles to the teacher
             for (const roleRecord of updatedRoles) {
                 const role_id = roleRecord.id;
 
@@ -218,6 +245,7 @@ exports.addYearSection = async (data) => {
         if (!existingSection) {
             const [sectionResult] = await connection.execute(
                 `INSERT INTO sections (course, year, section) VALUES (?, ?, ?)`,
+
                 [departmentId, year, section]
             );
             section_id = sectionResult.insertId;
@@ -237,10 +265,11 @@ exports.addYearSection = async (data) => {
             );
         }
 
+        // Assign subjects to the teacher in the section
         for (const subjectName of subjects) {
             const [[subjectResult]] = await connection.execute(
-                `SELECT id FROM subjects WHERE name = ?`,
-                [subjectName]
+                `SELECT id FROM subjects WHERE name = ? AND department_id = ?`,
+                [subjectName, course]
             );
 
             if (!subjectResult) {
@@ -257,6 +286,7 @@ exports.addYearSection = async (data) => {
             if (!existingTeacherSubject) {
                 await connection.execute(
                     `INSERT INTO teacher_subjects (teacher_id, section_id, subject_id) VALUES (?, ?, ?)`,
+
                     [teacher_id, section_id, subject_id]
                 );
             }
@@ -269,6 +299,7 @@ exports.addYearSection = async (data) => {
         );
 
         await connection.commit(); // Commit all changes
+        return { message: 'Year, section, roles, and subjects added successfully.' };
     } catch (err) {
         await connection.rollback(); // Rollback if an error occurs
         console.error(`Error adding year, section, roles, and subjects: ${err.message}`);
@@ -278,57 +309,69 @@ exports.addYearSection = async (data) => {
     }
 };
 
+
 exports.clearTeacherSections = async ({ teacher_id, roles, signature }) => {
     const connection = await db.getConnection(); // Get a DB connection
 
     try {
         await connection.beginTransaction();
 
-        // Remove teacher's sections and subjects
-        await connection.execute(
-            `DELETE FROM teacher_sections WHERE teacher_id = ?`,
-            [teacher_id]
-        );
-
-        await connection.execute(
-            `DELETE FROM teacher_subjects WHERE teacher_id = ?`,
-            [teacher_id]
-        );
-
         // Update roles and signature (if needed)
-        for (const role of roles) {
-            const [existingRole] = await connection.execute(
-                `SELECT id FROM roles WHERE name = ?`,
-                [role]
-            );
+        if (roles && Array.isArray(roles) && roles.length > 0) {
+            for (const role of roles) {
+                // Check if the role exists
+                const [existingRole] = await connection.execute(
+                    `SELECT id FROM roles WHERE name = ?`,
+                    [role]
+                );
 
-            const role_id = existingRole[0]?.id || (await connection.execute(
-                `INSERT INTO roles (name) VALUES (?)`,
-                [role]
-            ))[0].insertId;
+                // Insert role if it doesn't exist
+                const role_id = existingRole[0]?.id || (await connection.execute(
+                    `INSERT INTO roles (name) VALUES (?)`,
+                    [role]
+                ))[0].insertId;
 
+                // Assign role to the teacher if not already assigned
+                await connection.execute(
+                    `INSERT INTO teacher_roles (teacher_id, role_id) VALUES (?, ?)
+                     ON DUPLICATE KEY UPDATE role_id = role_id`,
+                    [teacher_id, role_id]
+                );
+            }
+        }
+
+        // Update or insert the teacher's signature
+        const [[existingTeacher]] = await connection.execute(
+            `SELECT teacher_id FROM teacher_details WHERE teacher_id = ?`,
+            [teacher_id]
+        );
+
+        if (!existingTeacher) {
+            console.log("Inserting new teacher signature:", signature);
             await connection.execute(
-                `INSERT INTO teacher_roles (teacher_id, role_id) VALUES (?, ?)
-                 ON DUPLICATE KEY UPDATE role_id = role_id`,
-                [teacher_id, role_id]
+                `INSERT INTO teacher_details (teacher_id, signature) VALUES (?, ?)`,
+                [teacher_id, signature]
+            );
+        } else if (signature) {
+            console.log("Updating teacher signature:", signature);
+            await connection.execute(
+                `UPDATE teacher_details SET signature = ? WHERE teacher_id = ?`,
+                [signature, teacher_id]
             );
         }
 
-        await connection.execute(
-            `UPDATE teacher_details SET signature = ? WHERE teacher_id = ?`,
-            [signature, teacher_id]
-        );
-
+        // Ensure first login is set to 0
         await connection.execute(
             `UPDATE users SET first_login = 0 WHERE id = ?`,
             [teacher_id]
         );
 
         await connection.commit();
+        return { message: 'Teacher roles and signature successfully updated.' };
     } catch (err) {
         await connection.rollback();
-        console.error(`Error clearing teacher sections: ${err.message}`);
-        throw new Error(`Error clearing teacher sections: ${err.message}`);
+        console.error(`Error updating teacher roles and signature: ${err.message}`);
+        throw new Error(`Error updating teacher roles and signature: ${err.message}`);
     } finally {
         connection.release();
     }
@@ -342,20 +385,38 @@ exports.addTeacher = async (teacher) => {
     const { first_name, middle_name, last_name, email, password } = teacher;
 
     try {
+        // Check if the email already exists
+        const [existingUser] = await db.execute(
+            'SELECT id FROM users WHERE email = ?',
+            [email]
+        );
+
+        if (existingUser.length > 0) {
+            return {
+                status: 400,
+                message: 'Email already exists in the database.',
+            };
+        }
+
         // Hash the password
         const hashedPassword = await bcrypt.hash(password, saltRounds);
 
-        await db.execute(`
+        // Insert the new teacher account
+        await db.execute(
+            `
             INSERT INTO users (first_name, middle_name, last_name, email, password, role)
             VALUES (?, ?, ?, ?, ?, 'teacher')
-        `, [first_name, middle_name, last_name, email, hashedPassword]);
+            `,
+            [first_name, middle_name, last_name, email, hashedPassword]
+        );
 
-        return { message: 'Teacher account added successfully' };
+        return { status: 201, message: 'Teacher account added successfully.' };
     } catch (err) {
         console.error(`Error adding teacher account: ${err.message}`);
         throw new Error(`Error adding teacher account: ${err.message}`);
     }
 };
+
 
 exports.bulkAddTeachers = async (teachers) => {
 
@@ -398,14 +459,14 @@ exports.updateTeacher = async (id, teacher) => {
         middle_name,
         last_name,
         email,
-        password,
-        yearSectionSubjects = [] // Expecting an array of { course, year_and_section, subjects }
+        password
     } = teacher;
 
     try {
+        // Hash the password only if it's provided
         const hashedPassword = password ? await bcrypt.hash(password, saltRounds) : null;
 
-        // Prepare values for users table
+        // Prepare values for updating the `users` table
         const userValues = [
             first_name || null,
             middle_name || null,
@@ -415,114 +476,23 @@ exports.updateTeacher = async (id, teacher) => {
             id
         ];
 
-        // Update the users table
-        const userResult = await db.execute(`
+        // Update the `users` table
+        const [userResult] = await db.execute(`
             UPDATE users
-            SET first_name = ?, middle_name = ?, last_name = ?, email = ?, password = COALESCE(?, password)
-            WHERE id = ? AND role = 'teacher'
+            SET 
+                first_name = ?, 
+                middle_name = ?, 
+                last_name = ?, 
+                email = ?, 
+                password = COALESCE(?, password) -- Update password only if provided
+            WHERE 
+                id = ? 
+                AND role = 'teacher'
         `, userValues);
 
-        if (userResult[0].affectedRows === 0) {
+        // Check if any rows were affected
+        if (userResult.affectedRows === 0) {
             throw new Error('No user found to update');
-        }
-
-        // Fetch existing sections and subjects for the teacher
-        const [existingSections] = await db.execute(`
-            SELECT ts.section_id AS section_id, ts.course, ts.year_and_section, 
-                   GROUP_CONCAT(tsub.subject_id) AS subjects
-            FROM teacher_sections ts
-            LEFT JOIN teacher_subjects tsub ON ts.section_id = tsub.section_id
-            WHERE ts.teacher_id = ?
-            GROUP BY ts.section_id
-        `, [id]);
-
-        const existingSectionsMap = existingSections.reduce((map, section) => {
-            map[`${section.course}_${section.year_and_section}`] = {
-                section_id: section.section_id,
-                subjects: section.subjects ? section.subjects.split(',').map(Number) : []
-            };
-            return map;
-        }, {});
-
-        // Loop over new yearSectionSubjects (provided by admin)
-        for (const section of yearSectionSubjects) {
-            const { course, year_and_section, subjects } = section;
-            const sectionKey = `${course}_${year_and_section}`;
-
-            // Check if section already exists
-            if (existingSectionsMap[sectionKey]) {
-                const existingSection = existingSectionsMap[sectionKey];
-                const existingSubjectIds = existingSection.subjects;
-
-                // Delete subjects that are unchecked
-                const subjectsToDelete = existingSubjectIds.filter(subjectId => !subjects.includes(subjectId));
-
-                if (subjectsToDelete.length > 0) {
-                    const deletePlaceholders = subjectsToDelete.map(() => '?').join(',');
-                    await db.execute(`
-                        DELETE FROM teacher_subjects
-                        WHERE section_id = ? AND subject_id IN (${deletePlaceholders})
-                    `, [existingSection.section_id, ...subjectsToDelete]);
-                }
-
-                // Add new subjects that are not in the existing ones
-                const subjectsToAdd = subjects.filter(subject => !existingSubjectIds.includes(subject));
-
-                for (const subjectName of subjectsToAdd) {
-                    const [subjectRows] = await db.execute(`
-                        SELECT id FROM subjects WHERE name = ?
-                    `, [subjectName]);
-
-                    if (subjectRows.length === 0) {
-                        console.error(`Subject name not found: ${subjectName}`);
-                        continue;
-                    }
-
-                    const subjectId = subjectRows[0].id;
-
-                    await db.execute(`
-                        INSERT INTO teacher_subjects (teacher_id, section_id, subject_id)
-                        VALUES (?, ?, ?)
-                    `, [id, existingSection.section_id, subjectId]);
-                }
-
-                delete existingSectionsMap[sectionKey];
-            } else {
-                // If the section is new, insert the section and subjects
-                const [sectionResult] = await db.execute(`
-                    INSERT INTO teacher_sections (teacher_id, course, year_and_section)
-                    VALUES (?, ?, ?)
-                `, [id, course, year_and_section]);
-
-                const sectionId = sectionResult.insertId;
-
-                for (const subjectName of subjects) {
-                    const [subjectRows] = await db.execute(`
-                        SELECT id FROM subjects WHERE name = ?
-                    `, [subjectName]);
-
-                    if (subjectRows.length === 0) {
-                        console.error(`Subject name not found: ${subjectName}`);
-                        continue;
-                    }
-
-                    const subjectId = subjectRows[0].id;
-
-                    await db.execute(`
-                        INSERT INTO teacher_subjects (teacher_id, section_id, subject_id)
-                        VALUES (?, ?, ?)
-                    `, [id, sectionId, subjectId]);
-                }
-            }
-        }
-
-        // Delete any sections that were not updated
-        const remainingSectionIds = Object.values(existingSectionsMap).map(section => section.section_id);
-        if (remainingSectionIds.length > 0) {
-            const deletePlaceholders = remainingSectionIds.map(() => '?').join(',');
-            await db.execute(`
-                DELETE FROM teacher_sections WHERE section_id IN (${deletePlaceholders})
-            `, remainingSectionIds);
         }
 
         return { message: 'Teacher account updated successfully' };
@@ -531,6 +501,7 @@ exports.updateTeacher = async (id, teacher) => {
         throw new Error(`Error updating teacher account: ${err.message}`);
     }
 };
+
 
 
 // Delete a teacher by ID
@@ -565,4 +536,3 @@ exports.deleteTeacherSection = async (req, res) => {
       res.status(500).json({ message: 'Error deleting section and subjects' });
     }
   };
-  

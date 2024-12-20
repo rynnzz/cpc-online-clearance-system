@@ -50,16 +50,22 @@ const router = createRouter({
       meta: { requiresAuth: true, allowedRoles: ['student'] }
     },
     {
+      path: '/teacher-profile',
+      name: 'teacher-profile',
+      component: () => import('../views/teacher/TeacherProfileView.vue'),
+      meta: { requiresAuth: true, allowedRoles: ['teacher'] }
+    },
+    {
       path: '/subject-clearance',
       name: 'subject-clearance',
       component: () => import('../views/teacher/SubjectClearanceView.vue'),
-      meta: { requiresAuth: true, allowedRoles: ['teacher', 'Department Head - BSIT'] }
+      meta: { requiresAuth: true, allowedRoles: ['Full Time', 'Part Time'] }
     },
     {
       path: '/administrative-clearance',
       name: 'administrative-clearance',
       component: () => import('../views/teacher/AdministrativeClearanceView.vue'),
-      meta: { requiresAuth: true, allowedRoles: ['teacher', 'Department Head - BSIT'] }
+      meta: { requiresAuth: true, allowedRoles: ['Department Head - BSIT', 'Department Head - BEED', 'Department Head - BSHM', 'Department Head - BSED', 'Accounting', 'Librarian', 'SAO/SSG Adviser', 'Guidance Counselor', 'Registrar', 'Clinic'] }
     },
     {
       path: '/unauthorized',

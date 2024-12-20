@@ -3,12 +3,19 @@ import axios from 'axios';
 const API_URL = 'http://localhost:5000/api/students'; // Update based on your backend route
 
 export default {
+  getClearedStudents() {
+    return axios.get(`${API_URL}/cleared-students`);
+  },
   getAllStudents() {
     return axios.get(API_URL);
   },
 
   getStudentInfo(id) {
     return axios.get(`${API_URL}/${id}/get-student-info`)
+  },
+
+  getAdministrativeClearance(id) {
+    return axios.get(`${API_URL}/${id}/get-administrative-clearance`);
   },
 
   addStudent(student) {

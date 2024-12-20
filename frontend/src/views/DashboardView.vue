@@ -1,216 +1,274 @@
 <template>
   <div class="w-full">
     <!-- Admin Dashboard -->
-    <div v-if="userRole.includes('admin')" class="p-8 bg-gray-900 text-gray-100 min-h-screen">
-      <h1 class="text-4xl font-bold mb-6">Admin Dashboard</h1>
+    <div v-if="userRole.includes('admin')" class="p-8 bg-gradient-to-br from-gray-900 via-gray-800 to-black text-gray-100 min-h-screen">
+    <!-- Admin Dashboard Header -->
+    <div class="mb-8 text-center">
+      <h1 class="text-5xl font-extrabold tracking-wide">Admin Dashboard</h1>
+      <p class="text-lg text-gray-400 mt-2">Manage users, subjects, and registrations at a glance</p>
+    </div>
 
-      <!-- Summary Cards for Admin -->
-      <div class="grid grid-cols-1 md:grid-cols-3 mb-6 gap-6">
-        <div class="card bg-gray-800 p-4 rounded-lg shadow-md">
-          <h2 class="text-xl font-semibold mb-2">Total Teachers</h2>
-          <p class="text-3xl font-bold">{{ dashboardStore.userCounts.teacher }}</p>
-        </div>
-        <div class="card bg-gray-800 p-4 rounded-lg shadow-md">
-          <h2 class="text-xl font-semibold mb-2">Total Students</h2>
-          <p class="text-3xl font-bold">{{ dashboardStore.userCounts.student }}</p>
-        </div>
-        <div class="card bg-gray-800 p-4 rounded-lg shadow-md">
-          <h2 class="text-xl font-semibold mb-2">Subjects Offered</h2>
-          <p class="text-3xl font-bold">{{ dashboardStore.userCounts.subjects }}</p>
-        </div>
+    <!-- Summary Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+      <!-- Total Teachers -->
+      <div class="card bg-gray-800 p-6 rounded-lg shadow-lg text-center">
+        <i class="fas fa-chalkboard-teacher text-blue-500 text-5xl mb-4"></i>
+        <h2 class="text-2xl font-semibold">Total Teachers</h2>
+        <p class="text-4xl font-bold mt-2">{{ dashboardStore.userCounts.teacher }}</p>
       </div>
 
-      <!-- Recent Activity Section for Admin -->
-      <div class="bg-gray-800 p-6 rounded-lg shadow-md mb-6">
-        <h2 class="text-2xl font-semibold mb-4">Recent Activity</h2>
-        <table class="table w-full">
-          <thead>
-            <tr class="bg-gray-700">
+      <!-- Total Students -->
+      <div class="card bg-gray-800 p-6 rounded-lg shadow-lg text-center">
+        <i class="fas fa-user-graduate text-green-500 text-5xl mb-4"></i>
+        <h2 class="text-2xl font-semibold">Total Students</h2>
+        <p class="text-4xl font-bold mt-2">{{ dashboardStore.userCounts.student || 0 }}</p>
+      </div>
+
+      <!-- Subjects Offered -->
+      <div class="card bg-gray-800 p-6 rounded-lg shadow-lg text-center">
+        <i class="fas fa-book text-yellow-500 text-5xl mb-4"></i>
+        <h2 class="text-2xl font-semibold">Subjects Offered</h2>
+        <p class="text-4xl font-bold mt-2">{{ dashboardStore.userCounts.subjects }}</p>
+      </div>
+    </div>
+
+    <!-- Recent Registrations -->
+    <div class="bg-gray-800 p-6 rounded-lg shadow-lg mb-12">
+      <h2 class="text-3xl font-bold mb-6">
+        <i class="fas fa-user-plus text-purple-500"></i> Recent Registrations
+      </h2>
+      <div v-if="dashboardStore.recentRegistrations.length > 0">
+        <table class="table w-full bg-gray-700 text-gray-100 rounded-lg">
+          <thead class="bg-gray-700 text-gray-400">
+            <tr>
               <th class="p-4 text-left">Full Name</th>
-              <th class="p-4 text-left">Role</th>
-              <th class="p-4 text-left">Description</th>
+              <th class="p-4 text-left">Role/s</th>
               <th class="p-4 text-left">Date Created</th>
             </tr>
           </thead>
           <tbody>
-            <tr v-for="registration in dashboardStore.recentRegistrations" :key="registration.created_at" class="hover:bg-gray-600">
+            <tr
+              v-for="registration in dashboardStore.recentRegistrations"
+              :key="registration.created_at"
+              class="hover:bg-gray-600"
+            >
               <td class="p-4">{{ registration.first_name }} {{ registration.last_name }}</td>
-              <td class="p-4">{{ registration.role }}</td>
-              <td class="p-4">{{ registration.teacher_type }}</td>
+              <td class="p-4">{{ registration.teacher_roles || registration.role }}</td>
               <td class="p-4">{{ new Date(registration.created_at).toLocaleString() }}</td>
             </tr>
           </tbody>
         </table>
       </div>
-
-      <!-- Quick Actions for Admin -->
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <button @click="navigateTo('manage-teacher-accounts')" class="btn btn-primary w-full">
-          Manage Teachers
-        </button>
-        <button @click="navigateTo('manage-student-accounts')" class="btn btn-primary w-full">
-          Manage Students
-        </button>
-        <button @click="navigateTo('manage-subjects')" class="btn btn-primary w-full">
-          Manage Subjects
-        </button>
+      <div v-else class="text-center text-gray-400 py-4">
+        <i class="fas fa-info-circle text-4xl mb-2"></i>
+        <p class="text-lg">No recent registrations available.</p>
       </div>
     </div>
-    
+
+    <!-- Quick Actions -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <button
+        @click="navigateTo('manage-teacher-accounts')"
+        class="btn btn-primary w-full flex items-center justify-center gap-2"
+      >
+        <i class="fas fa-chalkboard-teacher"></i>
+        Manage Teachers
+      </button>
+      <button
+        @click="navigateTo('manage-student-accounts')"
+        class="btn btn-primary w-full flex items-center justify-center gap-2"
+      >
+        <i class="fas fa-user-graduate"></i>
+        Manage Students
+      </button>
+      <button
+        @click="navigateTo('manage-subjects')"
+        class="btn btn-primary w-full flex items-center justify-center gap-2"
+      >
+        <i class="fas fa-book"></i>
+        Manage Subjects
+      </button>
+    </div>
+  </div>
+
+
     <!-- Teacher Dashboard -->
-    <div v-if="userRole.includes('teacher')" class="p-8 bg-gray-900 text-gray-100 min-h-screen">
-      <h1 class="text-4xl font-bold mb-6">Teacher Dashboard</h1>
+    <div v-if="userRole.some(role => ['Full Time', 'Part Time'].includes(role)) && !userRole.some(role => 
+             ['Department Head - BSIT', 'Department Head - BEED', 'Department Head - BSHM', 'Department Head - BSED', 
+              'Accounting', 'Librarian', 'SAO/SSG Adviser', 'Guidance Counselor', 'Registrar', 'Clinic'].includes(role))" class="p-8 bg-gradient-to-br from-gray-900 via-gray-800 to-black text-gray-100 min-h-screen">
+    <!-- Dashboard Header -->
+    <div class="mb-8 text-center">
+      <h1 class="text-5xl font-extrabold tracking-wide">Teacher Dashboard</h1>
+      <p class="text-lg text-gray-400 mt-2">Manage your subjects, students, and sections with ease</p>
+    </div>
 
-      <!-- Summary Cards for Teacher -->
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
-        <div class="card bg-gray-800 p-6 rounded-lg shadow-lg">
-          <h2 class="text-2xl font-bold">Total Students</h2>
-          <p class="text-4xl font-semibold mt-4">{{ teacherDashboardData.totalStudents }}</p>
-        </div>
-        <div class="card bg-gray-800 p-6 rounded-lg shadow-lg">
-          <h2 class="text-2xl font-bold">Total Subjects</h2>
-          <p class="text-4xl font-semibold mt-4">{{ teacherDashboardData.totalSubjects }}</p>
-        </div>
-        <div class="card bg-gray-800 p-6 rounded-lg shadow-lg">
-          <h2 class="text-2xl font-bold">Approved Clearances</h2>
-          <p class="text-4xl font-semibold mt-4">{{ teacherDashboardData.totalApproved }}</p>
-        </div>
-        <div class="card bg-gray-800 p-6 rounded-lg shadow-lg">
-          <h2 class="text-2xl font-bold">Pending Clearances</h2>
-          <p class="text-4xl font-semibold mt-4">{{ teacherDashboardData.totalPending }}</p>
-        </div>
+    <!-- Summary Cards -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
+      <!-- Total Students -->
+      <div class="card bg-gray-800 p-6 rounded-lg shadow-lg text-center hover:shadow-xl transition-transform transform hover:-translate-y-2">
+        <i class="fas fa-user-graduate text-green-500 text-5xl mb-4"></i>
+        <h2 class="text-2xl font-bold">Total Students</h2>
+        <p class="text-4xl font-semibold mt-2">{{ dashboardStore.teacherDashboard.totalStudents }}</p>
       </div>
 
-      <!-- Subject Distribution -->
-      <div class="bg-gray-800 p-6 rounded-lg shadow-lg mb-10">
-        <h2 class="text-2xl font-bold mb-4">Subject Distribution</h2>
-        <table class="table w-full">
-          <thead>
-            <tr class="bg-gray-700 text-white">
-              <th class="p-4 text-left">Subject</th>
-              <th class="p-4 text-left">Total Students</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="subject in teacherDashboardData.subjectDistribution" :key="subject.subjectId" class="hover:bg-gray-600">
-              <td class="p-4">{{ subject.subjectName }}</td>
-              <td class="p-4">{{ subject.totalStudents }}</td>
-            </tr>
-          </tbody>
-        </table>
+      <!-- Total Subjects -->
+      <div class="card bg-gray-800 p-6 rounded-lg shadow-lg text-center hover:shadow-xl transition-transform transform hover:-translate-y-2">
+        <i class="fas fa-book text-yellow-500 text-5xl mb-4"></i>
+        <h2 class="text-2xl font-bold">Total Subjects</h2>
+        <p class="text-4xl font-semibold mt-2">{{ dashboardStore.teacherDashboard.totalSubjects }}</p>
       </div>
 
-      <!-- Clearance Status Summary by Subject -->
-      <div class="bg-gray-800 p-6 rounded-lg shadow-lg mb-10">
-        <h2 class="text-2xl font-bold mb-4">Clearance Status Summary by Subject</h2>
-        <table class="table w-full">
-          <thead>
-            <tr class="bg-gray-700 text-white">
-              <th class="p-4 text-left">Subject</th>
-              <th class="p-4 text-left">Approved</th>
-              <th class="p-4 text-left">Pending</th>
-              <th class="p-4 text-left">Rejected</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="subject in teacherDashboardData.clearanceSummary" :key="subject.subjectId" class="hover:bg-gray-600">
-              <td class="p-4">{{ subject.subjectName }}</td>
-              <td class="p-4 text-green-500">{{ subject.approved }}</td>
-              <td class="p-4 text-blue-500">{{ subject.pending }}</td>
-              <td class="p-4 text-red-500">{{ subject.rejected }}</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-
-      <!-- Recent Approvals/Rejections -->
-      <div class="bg-gray-800 p-6 rounded-lg shadow-lg">
-        <h2 class="text-2xl font-bold mb-4">Recent Approvals & Rejections</h2>
-        <table class="table w-full">
-          <thead>
-            <tr class="bg-gray-700 text-white">
-              <th class="p-4 text-left">Date</th>
-              <th class="p-4 text-left">Student</th>
-              <th class="p-4 text-left">Subject</th>
-              <th class="p-4 text-left">Action</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="activity in teacherDashboardData.recentActivities" :key="activity.id" class="hover:bg-gray-600">
-              <td class="p-4">{{ activity.date }}</td>
-              <td class="p-4">{{ activity.studentName }}</td>
-              <td class="p-4">{{ activity.subjectName }}</td>
-              <td class="p-4" :class="{
-                'text-green-500': activity.action === 'Approved',
-                'text-red-500': activity.action === 'Rejected'
-              }">{{ activity.action }}</td>
-            </tr>
-            <tr v-if="teacherDashboardData.recentActivities.length === 0">
-              <td colspan="4" class="p-4 text-center text-gray-500">No recent activities</td>
-            </tr>
-          </tbody>
-        </table>
+      <!-- Total Sections -->
+      <div class="card bg-gray-800 p-6 rounded-lg shadow-lg text-center hover:shadow-xl transition-transform transform hover:-translate-y-2">
+        <i class="fas fa-users text-blue-500 text-5xl mb-4"></i>
+        <h2 class="text-2xl font-bold">Total Sections</h2>
+        <p class="text-4xl font-semibold mt-2">{{ dashboardStore.teacherDashboard.totalSections }}</p>
       </div>
     </div>
 
-    <div v-if="userRole.includes('student')" class="p-8 bg-gray-900 text-gray-100 min-h-screen">
-      <h1 class="text-4xl font-bold mb-6">Student Dashboard</h1>
+    <!-- Quick Actions -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <!-- Subject Clearance -->
+      <button
+        @click="navigateTo('subject-clearance')"
+        class="btn btn-primary w-full flex items-center justify-center gap-2 py-3 px-6 text-lg font-semibold"
+      >
+        <i class="fas fa-tasks"></i> Subject Clearance
+      </button>
 
-      <!-- Summary Cards for Student -->
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-10">
-        <div class="card bg-gray-800 p-6 rounded-lg shadow-lg">
-          <h2 class="text-2xl font-bold">Subjects Enrolled</h2>
-          <p class="text-4xl font-semibold mt-4">8</p>
-        </div>
-        <div class="card bg-gray-800 p-6 rounded-lg shadow-lg">
-          <h2 class="text-2xl font-bold">Clearance Status</h2>
-          <p class="text-xl mt-4">4 Approved, 3 Pending, 1 Rejected</p>
-        </div>
-        <div class="card bg-gray-800 p-6 rounded-lg shadow-lg">
-          <h2 class="text-2xl font-bold">Total Units</h2>
-          <p class="text-4xl font-semibold mt-4">24</p>
-        </div>
+      <!-- Administrative Clearance -->
+      <button
+        @click="navigateTo('administrative-clearance')"
+        class="btn btn-primary w-full flex items-center justify-center gap-2 py-3 px-6 text-lg font-semibold"
+      >
+        <i class="fas fa-clipboard-check"></i> Administrative Clearance
+      </button>
+
+      <!-- Account Settings -->
+      <button
+        @click="navigateTo('teacher-profile')"
+        class="btn btn-primary w-full flex items-center justify-center gap-2 py-3 px-6 text-lg font-semibold"
+      >
+        <i class="fas fa-cogs"></i> Account Settings
+      </button>
+    </div>
+  </div>
+
+  <div v-if="userRole.includes('teacher') && userRole.some(role =>
+          [
+            'Department Head - BSIT',
+            'Department Head - BEED',
+            'Department Head - BSHM',
+            'Department Head - BSED',
+            'Accounting',
+            'Librarian',
+            'SAO/SSG Adviser',
+            'Guidance Counselor',
+            'Registrar',
+            'Clinic',
+          ].includes(role)
+        )" class="p-8 bg-gradient-to-br from-gray-900 via-gray-800 to-black text-gray-100 min-h-screen">
+    <!-- Dashboard Header -->
+    <div class="mb-8 text-center">
+      <h1 class="text-5xl font-extrabold tracking-wide">Non-Teaching Staff Dashboard</h1>
+      <p class="text-lg text-gray-400 mt-2">Access key statistics and perform essential actions</p>
+    </div>
+
+    <!-- Summary Cards -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
+      <!-- Pending Clearances -->
+      <div class="card bg-gray-800 p-6 rounded-lg shadow-lg text-center hover:shadow-xl transition-transform transform hover:-translate-y-2">
+        <i class="fas fa-clipboard-list text-blue-500 text-5xl mb-4"></i>
+        <h2 class="text-2xl font-bold">Pending Clearances</h2>
+        <p class="text-4xl font-semibold mt-2">{{ dashboardStore.pendingClearances }}</p>
       </div>
 
-      <!-- Upcoming Deadlines (Static for now) -->
-      <div class="bg-gray-800 p-6 rounded-lg shadow-lg mb-10">
-        <h2 class="text-2xl font-bold mb-4">Upcoming Deadlines</h2>
-        <ul class="list-disc pl-6 text-lg">
-          <li>Submit project for Science by Nov 20, 2024</li>
-          <li>Clearance for Mathematics by Dec 5, 2024</li>
-          <li>Submit assignments for English by Dec 10, 2024</li>
-        </ul>
+      <!-- Active Students -->
+      <div class="card bg-gray-800 p-6 rounded-lg shadow-lg text-center hover:shadow-xl transition-transform transform hover:-translate-y-2">
+        <i class="fas fa-user-graduate text-green-500 text-5xl mb-4"></i>
+        <h2 class="text-2xl font-bold">Active Students</h2>
+        <p class="text-4xl font-semibold mt-2">{{ dashboardStore.totalStudents }}</p>
       </div>
 
-      <!-- Recently Approved Clearances (Static for now) -->
-      <div class="bg-gray-800 p-6 rounded-lg shadow-lg">
-        <h2 class="text-2xl font-bold mb-4">Recently Approved Clearances</h2>
-        <table class="table w-full">
-          <thead>
-            <tr class="bg-gray-700 text-white">
-              <th class="p-4 text-left">Date</th>
-              <th class="p-4 text-left">Subject</th>
-              <th class="p-4 text-left">Teacher</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr class="hover:bg-gray-600">
-              <td class="p-4">Nov 1, 2024</td>
-              <td class="p-4">Mathematics</td>
-              <td class="p-4">Mr. John Doe</td>
-            </tr>
-            <tr class="hover:bg-gray-600">
-              <td class="p-4">Oct 15, 2024</td>
-              <td class="p-4">History</td>
-              <td class="p-4">Ms. Emily White</td>
-            </tr>
-            <!-- Add more rows as needed -->
-          </tbody>
-        </table>
+      <!-- Total Departments -->
+      <div class="card bg-gray-800 p-6 rounded-lg shadow-lg text-center hover:shadow-xl transition-transform transform hover:-translate-y-2">
+        <i class="fas fa-building text-yellow-500 text-5xl mb-4"></i>
+        <h2 class="text-2xl font-bold">Total Departments</h2>
+        <p class="text-4xl font-semibold mt-2">{{ dashboardStore.totalDepartments }}</p>
       </div>
     </div>
 
-    <!-- First-Time Setup Modals -->
+    <!-- Quick Actions -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <!-- Manage Clearances -->
+      <button
+        @click="navigateTo('administrative-clearance')"
+        class="btn btn-primary w-full flex items-center justify-center gap-2 py-3 px-6 text-lg font-semibold"
+      >
+        <i class="fas fa-tasks"></i> Administrative Clearance
+      </button>
+
+      <!-- Account Settings -->
+      <button
+        @click="navigateTo('teacher-profile')"
+        class="btn btn-primary w-full flex items-center justify-center gap-2 py-3 px-6 text-lg font-semibold"
+      >
+        <i class="fas fa-cogs"></i> Account Settings
+      </button>
+    </div>
+  </div>
+
+    <!-- Student Dashboard -->
+    <div v-if="userRole.includes('student')" class="p-6 bg-gray-900 text-gray-100 min-h-screen">
+  <h1 class="text-3xl font-bold mb-6">Student Dashboard</h1>
+
+  <!-- Dashboard Cards -->
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+    <!-- Subjects Enrolled -->
+    <div class="card bg-gradient-to-r from-blue-600 to-blue-800 p-6 rounded-lg shadow-md flex flex-col items-center">
+      <div class="icon bg-white text-blue-600 p-3 rounded-full text-3xl mb-4 shadow">
+        <i class="fas fa-book"></i>
+      </div>
+      <h2 class="text-lg font-semibold text-white">Subjects Enrolled</h2>
+      <p class="text-4xl font-bold text-white mt-2">{{ dashboardStore.totalSubjects }}</p>
+    </div>
+
+    <!-- Total Subject Units -->
+    <div class="card bg-gradient-to-r from-green-600 to-green-800 p-6 rounded-lg shadow-md flex flex-col items-center">
+      <div class="icon bg-white text-green-600 p-3 rounded-full text-3xl mb-4 shadow">
+        <i class="fas fa-layer-group"></i>
+      </div>
+      <h2 class="text-lg font-semibold text-white">Total Subject Units</h2>
+      <p class="text-4xl font-bold text-white mt-2">{{ dashboardStore.totalUnits }}</p>
+    </div>
+
+    <!-- Approved Clearance -->
+    <div class="card bg-gradient-to-r from-indigo-600 to-indigo-800 p-6 rounded-lg shadow-md flex flex-col items-center">
+      <div class="icon bg-white text-indigo-600 p-3 rounded-full text-3xl mb-4 shadow">
+        <i class="fas fa-check-circle"></i>
+      </div>
+      <h2 class="text-lg font-semibold text-white">Approved Clearance</h2>
+      <p class="text-4xl font-bold text-white mt-2">{{ dashboardStore.approvedClearances }}</p>
+    </div>
+  </div>
+
+  <!-- Action Buttons -->
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <button
+      @click="navigateTo('view-clearance')"
+      class="btn btn-primary flex items-center justify-center gap-2 p-3 rounded-lg shadow-md bg-blue-600 hover:bg-blue-700 text-white"
+    >
+      <i class="fas fa-eye"></i> View Clearance
+    </button>
+    <button
+      @click="navigateTo('profile')"
+      class="btn btn-primary flex items-center justify-center gap-2 p-3 rounded-lg shadow-md bg-green-600 hover:bg-green-700 text-white"
+    >
+      <i class="fas fa-user-cog"></i> Account Settings
+    </button>
+  </div>
+</div>
+
     <FirstTimeSetupTeacher 
       :isOpen="isFirstTimeSetupTeacherOpen"
       :closeModal="closeFirstTimeModalTeacher"  
@@ -220,73 +278,54 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue';
+import { ref, onMounted, computed } from "vue";
+import { useAuthStore } from "@/stores/authStore";
+import { useDashboardStore } from "@/stores/dashboardStore";
 import FirstTimeSetupTeacher from '@/components/FirstTimeSetupTeacher.vue';
-import { useRouter } from 'vue-router';
-import { useAuthStore } from '@/stores/authStore';
-import { useDashboardStore } from '@/stores/dashboardStore';
 
 const authStore = useAuthStore();
 const dashboardStore = useDashboardStore();
-const router = useRouter();
 
-// Compute the user's role from the authStore
-const userRole = computed(() => authStore.userRole);
-
-const teacherDashboardData = ref({
-  totalStudents: 0,
-  totalSubjects: 0,
-  totalApproved: 0,
-  totalPending: 0,
-  subjectDistribution: [],
-  clearanceSummary: [],
-  recentActivities: []
-});
-
-const studentDashboardData = ref({
-  subjectsEnrolled: 8,
-  clearanceStatus: {
-    approved: 4,
-    pending: 3,
-    rejected: 1
-  },
-  totalUnits: 24,
-  clearanceDetails: [
-    { subject: 'Mathematics', teacher: 'Mr. John Doe', status: 'Approved' },
-    { subject: 'English', teacher: 'Ms. Jane Smith', status: 'Pending' },
-    { subject: 'Science', teacher: 'Dr. Mike Brown', status: 'Rejected' }
-  ],
-  upcomingDeadlines: [
-    { subject: 'Science', deadline: 'Nov 20, 2024' },
-    { subject: 'Mathematics', deadline: 'Dec 5, 2024' },
-    { subject: 'English', deadline: 'Dec 10, 2024' }
-  ],
-  recentApprovals: [
-    { date: 'Nov 1, 2024', subject: 'Mathematics', teacher: 'Mr. John Doe' },
-    { date: 'Oct 15, 2024', subject: 'History', teacher: 'Ms. Emily White' }
-  ]
-});
-
-// Modal open state based on firstLogin status
 const isFirstTimeSetupTeacherOpen = ref(false);
 
-onMounted(() => {
-  dashboardStore.initializeDashboard();
-  authStore.initializeAuth();
-  const storedFirstLogin = localStorage.getItem('isFirstLogin')
+const userRole = computed(() => authStore.userRole);
+
+onMounted(async () => {
+  try {
+    await dashboardStore.initializeDashboard();
+    authStore.initializeAuth();
+    const storedFirstLogin = localStorage.getItem('isFirstLogin')
   if (userRole.value.includes('teacher') && storedFirstLogin === '1') {
     isFirstTimeSetupTeacherOpen.value = true;
   }
+  } catch (error) {
+    console.error("Error initializing dashboard:", error);
+  }
+  const studentId = authStore.userId;
+  if (studentId) {
+    dashboardStore.initializeStudentDashboard(studentId);
+  }
+  const roleId = authStore.roleId;
+  console.log(roleId);
+  if (roleId) {
+    dashboardStore.initializeNonTeachingDashboard(roleId);
+  }
 });
 
-// Close the teacher setup modal
+const teacherId = authStore.userId;
+
+if (teacherId) {
+  dashboardStore.initializeTeacherDashboard(teacherId);
+}
+
 const closeFirstTimeModalTeacher = () => {
   isFirstTimeSetupTeacherOpen.value = false;
 };
 
-// Navigate to different management pages
-const navigateTo = (page) => {
-  router.push({ name: page });
+
+
+const navigateTo = (route) => {
+  window.location.href = `/${route}`;
 };
 </script>
 

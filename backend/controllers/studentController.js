@@ -28,6 +28,7 @@ exports.bulkAddStudents = async (req, res) => {
 
         // Map rows to student objects
         const students = jsonData.map(row => ({
+            id_num: row['ID Number'],
             first_name: row['First Name'],
             middle_name: row['Middle Name'],
             last_name: row['Last Name'],
@@ -101,7 +102,7 @@ exports.getStudentInfo = async (req, res) => {
                 sections.push(sectionMap[sectionKey]);
             }
 
-            // Add subject details with clearance status and signature if approved
+            // Add subject details with clearance status, signature, and teacher's name
             sectionMap[sectionKey].subjects.push({
                 subjectName: item.subject_name,
                 subjectCode: item.subject_code,
@@ -109,7 +110,10 @@ exports.getStudentInfo = async (req, res) => {
                 semester: item.semester,
                 schoolYear: item.school_year,
                 status: item.clearance_status || 'Pending', // Default to 'Pending' if no status
-                signature: item.clearance_status === 'Approved' ? item.teacher_signature : null // Include signature if status is 'Approved'
+                signature: item.clearance_status === 'Approved' ? item.teacher_signature : null, // Include signature if status is 'Approved'
+                teacherName: item.teacher_first_name && item.teacher_last_name
+                    ? `${item.teacher_first_name} ${item.teacher_last_name}`
+                    : null // Include teacher's name if available
             });
         });
 
@@ -130,6 +134,29 @@ exports.getStudentInfo = async (req, res) => {
     }
 };
 
+
+exports.getAdministrativeClearanceStatus = async (req, res) => {
+    try {
+        const studentId = req.params.id; // Extract studentId from request parameters
+
+        if (!studentId) {
+            return res.status(400).json({ message: 'Student ID is required.' });
+        }
+
+        // Fetch administrative clearance status from the model
+        const [clearanceData] = await studentModel.getAdministrativeClearanceStatus(studentId);
+
+        if (clearanceData.length === 0) {
+            return res.status(404).json({ message: 'No administrative clearance records found for this student.' });
+        }
+
+        // Send the data in response
+        res.status(200).json({ clearanceData });
+    } catch (error) {
+        console.error('Error fetching administrative clearance status:', error);
+        res.status(500).json({ message: 'Server error while fetching administrative clearance status.' });
+    }
+};
 
 
 // Update a student
@@ -154,5 +181,15 @@ exports.deleteStudent = async (req, res) => {
         res.json({ message: 'Student deleted successfully' });
     } catch (err) {
         res.status(500).json({ error: err.message });
+    }
+};
+
+exports.getClearedStudents = async (req, res) => {
+    try {
+        const [rows] = await studentModel.getClearedStudents();
+        res.status(200).json(rows);
+    } catch (error) {
+        console.error('Error fetching cleared students:', error);
+        res.status(500).json({ error: 'Failed to fetch cleared students.' });
     }
 };

@@ -133,6 +133,7 @@
       </label>
     </div>
   </div>
+  <div v-if="errors.roles" class="text-red-500 text-center text-lg mt-5">{{ errors.roles }}</div>
 </div>
 
 
@@ -158,7 +159,6 @@
                   v-model="section.department"
                   @change="filterSubjectsByDepartmentAndSemester(index)"
                   class="input input-bordered w-full p-2 bg-gray-800 text-white border border-gray-600 rounded-md"
-                  required
                 >
                   <option value="" disabled>Select Department</option>
                   <option v-for="dept in departments" :key="dept.id" :value="dept.id">
@@ -173,7 +173,7 @@
                 <select
                 v-model="section.year"
                 @change="filterSubjectsByDepartmentAndSemester(index)"
-                class="input input-bordered w-full p-2 bg-gray-800 text-white border border-gray-600 rounded-md" required>
+                class="input input-bordered w-full p-2 bg-gray-800 text-white border border-gray-600 rounded-md" >
                   <option value="" disabled>Select Year Level</option>
                   <option value="1st Year">1st Year</option>
                   <option value="2nd Year">2nd Year</option>
@@ -190,7 +190,6 @@
                   type="text"
                   placeholder="Year and Section (e.g., 1A)"
                   class="input input-bordered w-full p-2 bg-gray-800 text-white border border-gray-600 rounded-md"
-                  required
                 />
               </div>
 
@@ -220,6 +219,12 @@
             <button type="button" class="bg-purple-500 hover:bg-purple-600 text-white px-4 py-2 rounded-md" @click="addSection">Add Another Section</button>
           </div>
           </div>
+          <div v-for="(sectionErrors, index) in errors.sections" :key="index">
+  <div v-if="sectionErrors.department" class="text-red-500 text-center text-lg mt-2">{{ sectionErrors.department }}</div>
+  <div v-if="sectionErrors.year" class="text-red-500 text-center text-lg mt-2">{{ sectionErrors.year }}</div>
+  <div v-if="sectionErrors.section" class="text-red-500 text-center text-lg mt-2">{{ sectionErrors.section }}</div>
+  <div v-if="sectionErrors.subjects" class="text-red-500 text-center text-lg mt-2">{{ sectionErrors.subjects }}</div>
+</div>
           </div>
 
           <!-- Step 3: Signature -->
@@ -227,6 +232,8 @@
             <h3 class="text-xl font-semibold text-white">Step 3: Draw Your Signature</h3>
             <div class="border-2 border-gray-300 rounded-lg p-4 bg-gray-800">
               <vue-signature ref="signaturePad" :options="signatureOptions" class="w-full h-80 border border-gray-600 rounded-md"></vue-signature>
+            <div v-if="errors.signature" class="text-red-500 text-center text-lg mt-2">{{ errors.signature }}</div>
+
               <button type="button" class="mt-4 bg-pink-500 hover:bg-pink-600 text-white px-4 py-2 rounded-md" @click="clearSignature">Clear Signature</button>
             </div>
           </div>
@@ -234,6 +241,7 @@
           <!-- Step 4: Complete Setup -->
           <div class="flex justify-end">
             <button type="submit" class="bg-green-500 hover:bg-green-600 text-white px-6 py-3 rounded-lg font-semibold text-lg">Complete Setup</button>
+
           </div>
         </form>
       </div>
@@ -249,6 +257,12 @@ import { useSubjectStore } from "@/stores/subjectStore";
 import { useTeacherStore } from "@/stores/teacherStore";
 import { useSemesterStore } from "@/stores/semesterStore";
 import VueSignature from "vue-signature";
+import { useRouter } from 'vue-router'
+import { useAuthStore } from '@/stores/authStore'
+
+const authStore = useAuthStore()
+const router = useRouter();
+
 
 const props = defineProps({
   isOpen: Boolean,
@@ -280,6 +294,11 @@ const signatureOptions = ref({
 });
 const signaturePad = ref(null);
 
+const errors = ref({
+  roles: "",
+  sections: [],
+  signature: "",
+});
 // Fetch subjects, departments, and current semester on mount
 onMounted(async () => {
   try {
@@ -301,6 +320,56 @@ onMounted(async () => {
 });
 
 const departments = computed(() => subjectStore.departments || []); // Fallback if no departments are available
+
+const validateForm = () => {
+  let isValid = true;
+
+  // Validate roles
+  if (selectedRoles.value.length === 0) {
+    errors.value.roles = "Please select at least one role.";
+    isValid = false;
+  } else {
+    errors.value.roles = "";
+  }
+
+  // Validate sections if 'handlesSection' is checked
+  if (handlesSection.value) {
+    setupData.value.sections.forEach((section, index) => {
+      const sectionErrors = {};
+
+      if (!section.department) {
+        sectionErrors.department = "Please select a department.";
+        isValid = false;
+      }
+      if (!section.year) {
+        sectionErrors.year = "Please select a year level.";
+        isValid = false;
+      }
+      if (!section.section) {
+        sectionErrors.section = "Please enter a section name.";
+        isValid = false;
+      }
+      if (section.subjects.length === 0) {
+        sectionErrors.subjects = "Please select at least one subject.";
+        isValid = false;
+      }
+
+      errors.value.sections[index] = sectionErrors;
+    });
+  } else {
+    errors.value.sections = [];
+  }
+
+  // Validate signature
+  if (!signaturePad.value || signaturePad.value.isEmpty()) {
+    errors.value.signature = "Please draw your signature.";
+    isValid = false;
+  } else {
+    errors.value.signature = "";
+  }
+
+  return isValid;
+};
 
 // Filter subjects for a specific section based on department and semester
 const filterSubjectsByDepartmentAndSemester = (index) => {
@@ -362,10 +431,10 @@ const clearSignature = () => {
 
 // Submit setup data
 const submitSetup = async () => {
-  if (selectedRoles.value.length === 0) {
-    alert("Please select at least one role.");
+  if (!validateForm()) {
     return;
   }
+
   try {
     let sections = [];
     if (handlesSection.value) {
@@ -385,15 +454,22 @@ const submitSetup = async () => {
       signature,
       roles: selectedRoles.value,
     };
+
+    // Send setup data to the server
     await teacherStore.addYearSection(payload);
-    localStorage.setItem('isFirstLogin', '0');
-    alert("Setup completed successfully!");
-    props.closeModal();
+
+    // Notify the user and log them out
+    alert("Setup completed successfully! Please log in again to apply the changes.");
+
+    await authStore.logout();
+
+    router.push('/');
   } catch (error) {
     console.error("Error during setup submission:", error);
     alert("Failed to complete setup. Please try again.");
   }
 };
+
 </script>
 
 

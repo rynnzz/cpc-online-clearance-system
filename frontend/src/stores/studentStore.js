@@ -7,13 +7,29 @@ export const useStudentStore = defineStore('studentStore', {
     students: [],
     isLoading: false,
     currentStudent: {},
+    administrativeClearance: {},
+    clearedStudents: [],
   }),
   actions: {
+    async getClearedStudents() {
+      this.loading = true;
+      this.error = null;
+
+      try {
+        const response = await studentService.getClearedStudents();
+        this.clearedStudents = response.data;
+      } catch (error) {
+        this.error = 'Failed to fetch cleared students.';
+      } finally {
+        this.loading = false;
+      }
+    },
     async fetchStudents() {
       this.isLoading = true;
       try {
         const response = await studentService.getAllStudents(); // Ensure this method aligns with the backend service
         this.students = response.data;
+        console.log(this.students)
       } catch (error) {
         console.error("Failed to fetch Students:", error);
       } finally {
@@ -26,13 +42,23 @@ export const useStudentStore = defineStore('studentStore', {
         const authStore = useAuthStore();
         const studentId = authStore.userId;
         const response = await studentService.getStudentInfo(studentId); // Pass the extracted userId to the service
-
-        this.currentStudent = response.data; // Store the teacher info in the currentTeacher state
-        console.log(response)
+        this.currentStudent = response.data; // Store the  info in the currentTeacher state
+        return this.currentStudent;
       } catch (error) {
         console.error("Failed to get Student Info", error);
       }
     },
+
+    async getAdministrativeClearance() {
+      try {
+        const authStore = useAuthStore();
+        const studentId = authStore.userId;
+        const response = await studentService.getAdministrativeClearance(studentId); // Pass the extracted userId to the service
+        this.administrativeClearance = response.data;
+      } catch (error) {
+        console.error("Failed to get Administrative Clearance", error);
+    }
+  },
 
     async addSubject(payload) {
       try {
@@ -81,3 +107,5 @@ export const useStudentStore = defineStore('studentStore', {
     }
   }
 });
+
+

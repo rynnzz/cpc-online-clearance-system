@@ -6,17 +6,27 @@ export const useAdministrativeClearanceStore = defineStore('administrativeCleara
     isLoading: false,
     successMessage: null,
     errorMessage: null,
+    clearanceData:[]
   }),
 
   actions: {
-    // Update the clearance status of a student
-    async updateClearanceStatus(studentId, departmentId, sectionId, status) {
+
+    async getAdministrativeClearance(roleId) {
+      try {
+        const response = await administrativeClearanceServices.getAdministrativeClearance(roleId);
+        this.clearanceData = response.data.clearanceData || [];
+      } catch (error) {
+        console.error('Error getting administrative clearance status:', error);
+        this.clearanceData = [];
+      }
+    },
+    async updateClearanceStatus(studentId, departmentId, sectionId, status, roleId) {
       this.isLoading = true;
       this.successMessage = null;
       this.errorMessage = null;
 
       try {
-        await administrativeClearanceServices.updateClearanceStatus(studentId, departmentId, sectionId, status);
+        await administrativeClearanceServices.updateClearanceStatus(studentId, departmentId, sectionId, status, roleId);
         this.successMessage = `Student clearance status updated to ${status}`;
       } catch (error) {
         console.error('Error updating administrative clearance status:', error);
@@ -27,7 +37,7 @@ export const useAdministrativeClearanceStore = defineStore('administrativeCleara
     },
 
     // Bulk update clearance statuses for a list of students
-    async bulkUpdateStatus(studentIds, departmentId, sectionId, status) {
+    async bulkUpdateStatus(studentIds, departmentId, sectionId, status, roleId) {
       this.isLoading = true;
       this.successMessage = null;
       this.errorMessage = null;
@@ -35,7 +45,7 @@ export const useAdministrativeClearanceStore = defineStore('administrativeCleara
       try {
         await Promise.all(
           studentIds.map((studentId) =>
-            administrativeClearanceServices.updateClearanceStatus(studentId, departmentId, sectionId, status)
+            administrativeClearanceServices.updateClearanceStatus(studentId, departmentId, sectionId, status, roleId)
           )
         );
         this.successMessage = `Bulk update: All selected students have been updated to ${status}.`;

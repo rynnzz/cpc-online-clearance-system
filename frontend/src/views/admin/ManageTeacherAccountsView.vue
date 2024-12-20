@@ -38,6 +38,7 @@
           <th class="p-4 text-sm text-left">#</th>
           <th class="p-4 text-sm text-left">Full Name</th>
           <th class="p-4 text-sm text-left">Email</th>
+          <th class="p-4 text-sm text-left">Role/s</th>
           <th class="p-4 text-sm text-left">Actions</th>
         </tr>
       </thead>
@@ -49,8 +50,9 @@
           <td class="p-4 text-sm"> {{ index + 1 }}</td>
           <td class="p-4 text-sm">{{ teacher.last_name }}, {{ teacher.first_name }} {{ teacher.middle_name }}</td>
           <td class="p-4 text-sm">{{ teacher.email }}</td>
+          <td class="p-4 text-sm">{{ teacher.roles ? teacher.roles.join(', ') : 'N/A' }}</td>
+
           <td class="p-4 flex flex-col sm:flex-row sm:space-x-2 space-y-2 sm:space-y-0">
-            <button @click="openSubjectsModal(teacher.yearSectionSubjects)" class="btn btn-info text-xs sm:text-sm">Subjects</button>
             <button @click="openEditModal(teacher)" class="btn btn-warning text-xs sm:text-sm"><i class="fas fa-edit"></i></button>
             <button @click="openConfirmationModal(teacher.id)" class="btn btn-error text-xs sm:text-sm"><i class="fas fa-trash"></i></button>
           </td>
@@ -82,8 +84,6 @@
 
     <AddTeacherModal :isOpen="isAddModalOpen" :closeModal="closeAddModal" />
     <EditTeacherModal :isOpen="isEditModalOpen" :closeModal="closeEditModal" :teacher="currentTeacher" />
-    <SubjectsModal 
-      :isOpen="isSubjectsModalOpen" :closeModal="closeSubjectsModal" :yearSectionSubjects="currentYearSectionSubjects" />
     <input type="checkbox" id="confirmation-modal" class="modal-toggle" v-model="isConfirmationModalOpen" />
     <div class="modal">
       <div class="modal-box">
@@ -103,17 +103,14 @@ import { ref, onMounted, computed } from 'vue';
 import { useTeacherStore } from '@/stores/teacherStore';
 import AddTeacherModal from '@/components/AddTeacherModal.vue';
 import EditTeacherModal from '@/components/EditTeacherModal.vue';
-import SubjectsModal from '@/components/SubjectsModal.vue';
 
 const teacherStore = useTeacherStore();
 const isAddModalOpen = ref(false);
 const isEditModalOpen = ref(false);
 const isBulkAddModalOpen = ref(false);
-const isSubjectsModalOpen = ref(false);
 const isConfirmationModalOpen = ref(false);
 const teacherIdToDelete = ref(null);
 const currentTeacher = ref({});
-const currentYearSectionSubjects = ref([]);
 const file = ref(null);
 const searchQuery = ref(''); // Search query for filtering
 const selectedTeachers = ref([]); // List of selected teacher IDs for bulk actions
@@ -203,12 +200,15 @@ const filterTeachers = () => {
 };
 
 const openAddModal = () => (isAddModalOpen.value = true);
-const closeAddModal = () => (isAddModalOpen.value = false);
+const closeAddModal = () => {
+  isAddModalOpen.value = false
+};
 
 const openBulkAddModal = () => (isBulkAddModalOpen.value = true);
 const closeBulkAddModal = () => (isBulkAddModalOpen.value = false);
 
 const openEditModal = (teacher) => {
+  console.log("Selected teacher:", teacher);
   currentTeacher.value = { ...teacher };
   isEditModalOpen.value = true;
 };
@@ -216,16 +216,6 @@ const openEditModal = (teacher) => {
 const closeEditModal = () => {
   isEditModalOpen.value = false;
   currentTeacher.value = {};
-};
-
-const openSubjectsModal = (yearSectionSubjects) => {
-  currentYearSectionSubjects.value = yearSectionSubjects;
-  isSubjectsModalOpen.value = true;
-};
-
-const closeSubjectsModal = () => {
-  isSubjectsModalOpen.value = false;
-  currentYearSectionSubjects.value = [];
 };
 
 const openConfirmationModal = (id) => {

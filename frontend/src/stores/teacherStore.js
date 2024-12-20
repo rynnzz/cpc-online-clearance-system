@@ -67,12 +67,31 @@ export const useTeacherStore = defineStore('teacherStore', {
 
     async addTeacher(teacher) {
       try {
-        await teacherService.addTeacher(teacher);
-        await this.fetchTeachers(); // Fetch the updated list of teachers
+        const response = await teacherService.addTeacher(teacher); // Call the service to add the teacher
+    
+        if (response.data.status === 400) {
+          return {
+            status: response.data.status,
+            message: response.data.message, // Forward backend error message
+          };
+        }
+    
+        if (response.data.status === 201) {
+          await this.fetchTeachers(); // Fetch the updated list of teachers
+          return {
+            status: response.data.status,
+            message: response.data.message, // Success message
+          };
+        }
       } catch (error) {
-        console.error("Failed to add teacher:", error);
+        console.error("Unexpected error adding teacher:", error);
+        return {
+          status: 500,
+          message: "An unexpected error occurred. Please try again.",
+        };
       }
     },
+    
 
     async bulkAddTeachers(formData) {
       try {

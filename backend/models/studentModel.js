@@ -2,6 +2,7 @@ const db = require('../config/database');
 const bcrypt = require('bcryptjs');
 const saltRounds = 10;
 
+
 // Get all students with user information
 exports.getAllStudents = () => {
     // Query to join users, student_details, sections, departments, and administrative_clearance_status tables
@@ -19,7 +20,8 @@ exports.getAllStudents = () => {
             sec.year, 
             sec.section, 
             sd.student_type,
-            acs.status AS clearance_status -- Fetch administrative clearance status
+            sd.id_num,
+            MAX(acs.status) AS clearance_status -- Fetch the latest administrative clearance status
         FROM users u
         LEFT JOIN student_details sd ON u.id = sd.student_id
         LEFT JOIN sections sec ON sd.section_id = sec.id
@@ -29,28 +31,73 @@ exports.getAllStudents = () => {
             AND sec.id = acs.section_id 
             AND d.id = acs.department_id -- Join with administrative_clearance_status to get clearance status
         WHERE u.role = 'student'
+        GROUP BY 
+            u.id, 
+            u.role, 
+            u.first_name, 
+            u.middle_name, 
+            u.last_name, 
+            u.email, 
+            d.name, 
+            sec.id, 
+            d.id, 
+            sec.year, 
+            sec.section, 
+            sd.student_type
     `);
 };
 
 
 
-
-// Find student by ID with user information
-exports.findById = (id) => {
+exports.getAdministrativeClearanceStatus = (studentId) => {
     return db.execute(`
-        SELECT u.id, u.role, u.first_name, u.middle_name, u.last_name, u.email, sd.degree, sd.yr_and_section, sd.student_type
-        FROM users u
-        JOIN student_details sd ON u.id = sd.student_id
-        WHERE u.id = ?
-    `, [id]);
+        SELECT DISTINCT
+            acs.id AS clearance_id,
+            acs.student_id,
+            u.first_name AS student_first_name,
+            u.last_name AS student_last_name,
+            acs.department_id,
+            dep.name AS department_name,
+            acs.section_id,
+            sec.year AS section_year,
+            sec.section AS section_name,
+            acs.status AS clearance_status,
+            acs.role_id,
+            r.name AS role_name,
+            td.signature AS teacher_signature,
+            tu.first_name AS teacher_first_name,
+            tu.last_name AS teacher_last_name,
+            acs.updated_at
+        FROM 
+            administrative_clearance_status acs
+        JOIN 
+            users u ON acs.student_id = u.id
+        JOIN 
+            departments dep ON acs.department_id = dep.id
+        JOIN 
+            sections sec ON acs.section_id = sec.id
+        JOIN 
+            roles r ON acs.role_id = r.id
+        LEFT JOIN 
+            teacher_roles tr ON tr.role_id = acs.role_id
+        LEFT JOIN 
+            teacher_details td ON td.teacher_id = tr.teacher_id
+        LEFT JOIN 
+            users tu ON tu.id = tr.teacher_id
+        WHERE 
+            acs.student_id = ?
+            AND r.name NOT IN ('Full Time', 'Part Time')
+        ORDER BY 
+            acs.updated_at DESC;
+    `, [studentId]);
 };
+
 
 // Add a new student
 exports.addStudent = async (student) => {
-    const { first_name, middle_name, last_name, email, course, year, section, password, student_type } = student;
+    const { id_num, first_name, middle_name, last_name, email, course, year, section, password, student_type } = student;
 
     try {
-
         const hashedPassword = await bcrypt.hash(password, saltRounds);
 
         // Insert new user into the users table
@@ -94,9 +141,9 @@ exports.addStudent = async (student) => {
 
         // Insert into student_details
         await db.execute(`
-            INSERT INTO student_details (student_id, section_id, student_type)
-            VALUES (?, ?, ?)
-        `, [userId, sectionId, student_type]);
+            INSERT INTO student_details (student_id, section_id, student_type, id_num)
+            VALUES (?, ?, ?, ?)
+        `, [userId, sectionId, student_type, id_num]);
 
         // Insert into student_sections
         const [existingStudentSection] = await db.execute(`
@@ -135,12 +182,29 @@ exports.addStudent = async (student) => {
             await Promise.all(subjectPromises);
         }
 
-        return { message: 'Student account added successfully with section and subjects assigned.' };
+        // Fetch roles excluding Full Time and Part Time
+        const [roles] = await db.execute(`
+            SELECT id FROM roles
+            WHERE name NOT IN ('Full Time', 'Part Time')
+        `);
+
+        // Populate administrative_clearance_status
+        const clearancePromises = roles.map(async (role) => {
+            await db.execute(`
+                INSERT INTO administrative_clearance_status (student_id, department_id, section_id, role_id, status, created_at, updated_at)
+                VALUES (?, ?, ?, ?, 'Pending', NOW(), NOW())
+            `, [userId, departmentId, sectionId, role.id]);
+        });
+        await Promise.all(clearancePromises);
+
+        return { message: 'Student account added successfully with section, subjects, and administrative clearance populated.' };
     } catch (err) {
         console.error(`Error adding student account: ${err.message}`);
         throw new Error(`Error adding student account: ${err.message}`);
     }
 };
+
+
 
 exports.bulkAddStudents = async (students) => {
     const connection = await db.getConnection();
@@ -150,7 +214,7 @@ exports.bulkAddStudents = async (students) => {
         await connection.beginTransaction();
 
         const promises = students.map(async (student) => {
-            const { first_name, middle_name, last_name, email, course, year, section, password, student_type } = student;
+            const { id_num, first_name, middle_name, last_name, email, course, year, section, password, student_type } = student;
 
             // Ensure password is treated as a string
             const passwordStr = String(password);
@@ -196,16 +260,16 @@ exports.bulkAddStudents = async (students) => {
             }
 
             // Insert into the student_sections table
-            const [studentSectionResult] = await connection.execute(`
+            await connection.execute(`
                 INSERT INTO student_sections (student_id, section_id)
                 VALUES (?, ?)
             `, [userId, sectionId]);
 
             // Insert student details into the student_details table
             await connection.execute(`
-                INSERT INTO student_details (student_id, section_id, student_type)
-                VALUES (?, ?, ?)
-            `, [userId, sectionId, student_type]);
+                INSERT INTO student_details (student_id, section_id, student_type, id_num)
+                VALUES (?, ?, ?, ?)
+            `, [userId, sectionId, student_type, id_num]);
 
             // Automatically assign subjects to the student based on course and year
             const [subjectResults] = await connection.execute(`
@@ -222,12 +286,32 @@ exports.bulkAddStudents = async (students) => {
             });
 
             await Promise.all(subjectPromises);
+
+            // Fetch all roles
+            const [roles] = await connection.execute(`
+                SELECT id FROM roles
+                WHERE name NOT IN ('Full Time', 'Part Time')
+            `);
+
+            if (roles.length === 0) {
+                throw new Error('No roles found in the roles table');
+            }
+
+            // Populate administrative_clearance_status table for the student
+            const clearancePromises = roles.map(async (role) => {
+                await connection.execute(`
+                    INSERT INTO administrative_clearance_status (student_id, department_id, section_id, role_id, status)
+                    VALUES (?, ?, ?, ?, 'Pending')
+                `, [userId, departmentId, sectionId, role.id]);
+            });
+
+            await Promise.all(clearancePromises);
         });
 
         await Promise.all(promises);
 
         await connection.commit();
-        return { message: 'All student accounts added successfully' };
+        return { message: 'All student accounts and administrative clearance statuses added successfully' };
     } catch (err) {
         await connection.rollback();
         console.error(`Error bulk adding student accounts: ${err.message}`);
@@ -236,6 +320,7 @@ exports.bulkAddStudents = async (students) => {
         connection.release();
     }
 };
+
 
 // exports.addSubject = async (id, payload) => {
 //     const { subjects, course, year_and_section } = payload;
@@ -328,7 +413,9 @@ exports.getStudentInfo = async (studentId) => {
             subj.semester,
             subj.school_year,
             COALESCE(cs.status, 'Pending') AS clearance_status,
-            CASE WHEN COALESCE(cs.status, 'Pending') = 'Approved' THEN td.signature ELSE NULL END AS teacher_signature
+            CASE WHEN COALESCE(cs.status, 'Pending') = 'Approved' THEN td.signature ELSE NULL END AS teacher_signature,
+            teacher.first_name AS teacher_first_name,
+            teacher.last_name AS teacher_last_name
         FROM 
             users u
         JOIN 
@@ -344,6 +431,11 @@ exports.getStudentInfo = async (studentId) => {
             clearance_status cs ON cs.student_id = u.id 
                                  AND cs.subject_id = subj.id
         LEFT JOIN 
+            teacher_subjects ts ON ts.subject_id = subj.id 
+                                AND ts.section_id = sec.id
+        LEFT JOIN 
+            users teacher ON teacher.id = ts.teacher_id -- Join to get the teacher's name
+        LEFT JOIN 
             (SELECT ts.subject_id, ts.section_id, td.signature
              FROM teacher_subjects ts
              JOIN teacher_details td ON ts.teacher_id = td.teacher_id
@@ -355,6 +447,8 @@ exports.getStudentInfo = async (studentId) => {
             subj.semester, subj.name;
     `, [studentId]);
 };
+
+
 
 
 // Update a student by ID
@@ -431,12 +525,62 @@ exports.updateStudent = async (id, student) => {
             WHERE student_id = ?
         `, [sectionId, student_type, id]);
 
+        // Update the `student_sections` table
+        const [existingStudentSection] = await db.execute(`
+            SELECT id FROM student_sections WHERE student_id = ?
+        `, [id]);
+
+        if (existingStudentSection.length > 0) {
+            // Update the existing record
+            await db.execute(`
+                UPDATE student_sections
+                SET section_id = ?
+                WHERE student_id = ?
+            `, [sectionId, id]);
+        } else {
+            // Insert a new record if it doesn't exist
+            await db.execute(`
+                INSERT INTO student_sections (student_id, section_id)
+                VALUES (?, ?)
+            `, [id, sectionId]);
+        }
+
+        // Update the `administrative_clearance_status` table
+        await db.execute(`
+            UPDATE administrative_clearance_status
+            SET department_id = ?, section_id = ?
+            WHERE student_id = ?
+        `, [departmentId, sectionId, id]);
+
+        // Get subjects based on department and year level
+        const [subjects] = await db.execute(`
+            SELECT id FROM subjects
+            WHERE department_id = ? AND year = ?
+        `, [departmentId, year]);
+
+        // Update the `student_subjects` table
+        if (subjects.length > 0) {
+            // Clear existing subjects
+            await db.execute(`
+                DELETE FROM student_subjects WHERE student_id = ?
+            `, [id]);
+
+            // Insert new subjects
+            for (const subject of subjects) {
+                await db.execute(`
+                    INSERT INTO student_subjects (student_id, subject_id)
+                    VALUES (?, ?)
+                `, [id, subject.id]);
+            }
+        }
+
         return { success: true, message: 'Student updated successfully' };
     } catch (error) {
         console.error(`Error updating student: ${error.message}`);
         throw new Error(`Error updating student: ${error.message}`);
     }
 };
+
 
 
 // Delete a student by ID
@@ -446,3 +590,51 @@ exports.deleteStudent = (id) => {
         WHERE id = ?
     `, [id]);
 };
+
+// Fetch students who are fully cleared
+exports.getClearedStudents = async () => {
+    try {
+        return db.execute(`
+            SELECT DISTINCT
+                u.id AS student_id,
+                u.first_name AS student_first_name,
+                u.last_name AS student_last_name,
+                u.email AS student_email,
+                sd.id_num as student_id_num,
+                sec.year AS section_year,
+                sec.section AS section_name,
+                dep.name AS department_name,
+                COUNT(DISTINCT cs.subject_id) AS total_subjects,
+                COUNT(DISTINCT CASE WHEN cs.status = 'Approved' THEN cs.subject_id END) AS approved_subjects,
+                acs.status AS admin_status
+            FROM users u
+            LEFT JOIN student_details sd ON sd.student_id = u.id
+            LEFT JOIN student_sections ss ON ss.student_id = u.id
+            LEFT JOIN sections sec ON sec.id = ss.section_id
+            LEFT JOIN departments dep ON sec.course = dep.id
+            LEFT JOIN clearance_status cs ON cs.student_id = u.id
+            LEFT JOIN administrative_clearance_status acs ON acs.student_id = u.id
+            WHERE u.role = 'student'
+              AND NOT EXISTS (
+                  SELECT 1
+                  FROM clearance_status cs_pending
+                  WHERE cs_pending.student_id = u.id
+                    AND cs_pending.status IN ('Pending', 'Rejected') -- Exclude Pending and Rejected statuses
+              )
+              AND NOT EXISTS (
+                  SELECT 1
+                  FROM administrative_clearance_status acs_pending
+                  WHERE acs_pending.student_id = u.id
+                    AND acs_pending.status IN ('Pending', 'Rejected') -- Exclude Pending and Rejected statuses
+              )
+            GROUP BY u.id, sec.year, sec.section, dep.name, acs.status
+            HAVING approved_subjects = total_subjects AND admin_status = 'Approved'
+            ORDER BY u.last_name, u.first_name;
+        `);
+    } catch (error) {
+        console.error('Error fetching cleared students:', error);
+        throw error;
+    }
+};
+
+

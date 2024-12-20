@@ -8,6 +8,8 @@ const upload = multer({ dest: 'uploads/' });
 // Route to get all teachers
 router.get('/', teacherController.getAllTeachers);
 
+router.get('/:id/get-teacher-subjects', teacherController.getTeacherSubjects)
+
 router.get('/:id/get-teacher-info', teacherController.getTeacherInfo)
 
 // Route to add a new teacher

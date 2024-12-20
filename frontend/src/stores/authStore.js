@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia';
-import { login as loginService } from '../services/authServices'; 
+import { login as loginService, changePassword as changePassword } from '../services/authServices'; 
 import { decodeJwt } from 'jose';
 
 export const useAuthStore = defineStore('auth', {
@@ -8,6 +8,7 @@ export const useAuthStore = defineStore('auth', {
     token: null,        // Stores the JWT token in memory
     userRole: [],      // Stores all roles of the user
     isFirstLogin: null, // Stores the firstLogin status
+    roleId: []
   }),
 
   getters: {
@@ -34,8 +35,8 @@ export const useAuthStore = defineStore('auth', {
           // Store decoded values in the state
           this.userTokenId = decoded.id;
           this.userRole = decoded.userRoles || []; // Extract roles from the token
+          console.log(this.userRole)
           this.isFirstLogin = decoded.isFirstLogin;
-
           // Persist token in localStorage
           localStorage.setItem('token', this.token);
           localStorage.setItem('isFirstLogin', this.isFirstLogin);
@@ -52,7 +53,7 @@ export const useAuthStore = defineStore('auth', {
     async logout() {
       this.userTokenId = null;
       this.token = null;
-      this.userRoles = [];
+      this.userRole = [];
       this.isFirstLogin = null;
       localStorage.removeItem('token');
       localStorage.removeItem('isFirstLogin');
@@ -70,10 +71,31 @@ export const useAuthStore = defineStore('auth', {
           this.userTokenId = decoded.id;
           this.userRole = decoded.userRoles || []; // Extract roles from the token
           this.isFirstLogin = isFirstLogin === 'true'; // Convert string to boolean
+          this.roleId = decoded.roleIds || [];
         } catch (error) {
           console.error('Failed to decode token:', error);
           this.logout(); // If decoding fails, log the user out
         }
+      }
+    },
+    async changePassword(userId, newPassword) {
+      this.isUpdatingPassword = true;
+      this.passwordUpdateError = null;
+      this.passwordUpdateSuccess = null;
+
+      try {
+        // Call the service to update the password
+        await changePassword(userId, newPassword );
+
+        // Update success state
+        this.passwordUpdateSuccess = 'Password updated successfully.';
+      } catch (error) {
+        // Handle error during password update
+        this.passwordUpdateError = error.response?.data?.message || 'Failed to update password.';
+        console.error('Error updating password:', error);
+      } finally {
+        // Reset the updating state
+        this.isUpdatingPassword = false;
       }
     },
   },

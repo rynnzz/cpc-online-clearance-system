@@ -12,6 +12,10 @@ export default {
     return axios.get(`${API_URL}/${id}/get-teacher-info`)
   },
 
+  getTeacherSubjects(id) {
+    return axios.get(`${API_URL}/${id}/get-teacher-subjects`);
+  },
+
   // Add a new teacher
   addTeacher(teacher) {
     return axios.post(API_URL, teacher);

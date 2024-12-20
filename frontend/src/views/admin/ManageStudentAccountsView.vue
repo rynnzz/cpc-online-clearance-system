@@ -35,24 +35,24 @@
         <tr class="bg-gray-700">
           <th><input type="checkbox" @change="selectAll($event)" /></th>
           <th>#</th>
+          <th>ID Number</th>
           <th>Full Name</th>
           <th>Email</th>
           <th>Course</th>
           <th>Section</th>
-          <th>Year Level</th>
           <th>Student Type</th>
           <th>Actions</th>
         </tr>
       </thead>
       <tbody>
         <tr v-for="(student, index) in paginatedStudents" :key="student.id" class="hover:bg-gray-600">
-          <td><input type="checkbox" :value="student.id" v-model="selectedStudents" /></td>
+          <td><input type="checkbox" :value="student.student_id" v-model="selectedStudents" /></td>
           <td>{{ (currentPage - 1) * pageSize + index + 1 }}</td>
+          <td>{{ student.id_num }}</td>
           <td>{{ student.first_name }} {{ student.middle_name }} {{ student.last_name }}</td>
           <td>{{ student.email }}</td>
           <td>{{ student.course }}</td>
           <td>{{ student.section }}</td>
-          <td>{{ student.year }}</td>
           <td>{{ student.student_type }}</td>
           <td class="flex space-x-2">
             <button @click="editStudent(student)" class="btn btn-warning">
@@ -75,67 +75,124 @@
 
     <!-- Add Student Modal -->
     <div v-if="isAddModalOpen" class="modal modal-open">
-  <div class="modal-box bg-gray-800 text-white w-full max-w-4xl">
-    <h2 class="text-2xl font-semibold mb-4">Add Student</h2>
-    <form @submit.prevent="handleAddStudent">
-      <div class="grid grid-cols-2 gap-4">
-        <!-- Row 1 -->
-        <div class="col-span-1">
-          <input v-model="newStudent.first_name" type="text" placeholder="First Name" class="input input-bordered w-full bg-gray-700" required />
+    <div class="modal-box bg-gray-800 text-white w-full max-w-4xl">
+      <h2 class="text-2xl font-semibold mb-4">Add Student</h2>
+      <form novalidate @submit.prevent="handleAddStudent">
+        <div class="grid grid-cols-2 gap-4">
+          <!-- Row 1 -->
+          <div class="col-span-1">
+            <input
+              v-model="newStudent.id_num"
+              type="text"
+              placeholder="ID Number"
+              :class="['input input-bordered w-full bg-gray-700', errors.id_num ? 'border-red-500' : '']"
+            />
+            <span v-if="errors.id_num" class="text-red-500 text-sm">{{ errors.id_num }}</span>
+          </div>
+          <div class="col-span-1">
+            <input
+              v-model="newStudent.first_name"
+              type="text"
+              placeholder="First Name"
+              :class="['input input-bordered w-full bg-gray-700', errors.first_name ? 'border-red-500' : '']"
+            />
+            <span v-if="errors.first_name" class="text-red-500 text-sm">{{ errors.first_name }}</span>
+          </div>
+          <div class="col-span-1">
+            <input
+              v-model="newStudent.middle_name"
+              type="text"
+              placeholder="Middle Name"
+              :class="['input input-bordered w-full bg-gray-700', errors.middle_name ? 'border-red-500' : '']"
+            />
+            <span v-if="errors.middle_name" class="text-red-500 text-sm">{{ errors.middle_name }}</span>
+          </div>
+          <!-- Row 2 -->
+          <div class="col-span-1">
+            <input
+              v-model="newStudent.last_name"
+              type="text"
+              placeholder="Last Name"
+              :class="['input input-bordered w-full bg-gray-700', errors.last_name ? 'border-red-500' : '']"
+            />
+            <span v-if="errors.last_name" class="text-red-500 text-sm">{{ errors.last_name }}</span>
+          </div>
+          <div class="col-span-1">
+            <input
+              v-model="newStudent.email"
+              type="email"
+              placeholder="Email"
+              :class="['input input-bordered w-full bg-gray-700', errors.email ? 'border-red-500' : '']"
+            />
+            <span v-if="errors.email" class="text-red-500 text-sm">{{ errors.email }}</span>
+          </div>
+          <!-- Row 3 -->
+          <div class="col-span-1">
+            <select
+              v-model="newStudent.course"
+              :class="['select select-bordered w-full bg-gray-700', errors.course ? 'border-red-500' : '']"
+            >
+              <option value="" disabled>Select Course</option>
+              <option value="BSIT">BSIT</option>
+              <option value="BSHM">BSHM</option>
+              <option value="BEED">BEED</option>
+              <option value="BSED - MAJOR IN ENGLISH">BSED - MAJOR IN ENGLISH</option>
+              <option value="BSED - MAJOR IN SCIENCE">BSED - MAJOR IN SCIENCE</option>
+            </select>
+            <span v-if="errors.course" class="text-red-500 text-sm">{{ errors.course }}</span>
+          </div>
+          <div class="col-span-1">
+            <select
+              v-model="newStudent.year"
+              :class="['select select-bordered w-full bg-gray-700', errors.year ? 'border-red-500' : '']"
+            >
+              <option value="" disabled>Select Year</option>
+              <option value="1st Year">1st Year</option>
+              <option value="2nd Year">2nd Year</option>
+              <option value="3rd Year">3rd Year</option>
+              <option value="4th Year">4th Year</option>
+            </select>
+            <span v-if="errors.year" class="text-red-500 text-sm">{{ errors.year }}</span>
+          </div>
+          <!-- Row 4 -->
+          <div class="col-span-1">
+            <input
+              v-model="newStudent.section"
+              type="text"
+              placeholder="Section (e.g., 1A)"
+              :class="['input input-bordered w-full bg-gray-700', errors.section ? 'border-red-500' : '']"
+            />
+            <span v-if="errors.section" class="text-red-500 text-sm">{{ errors.section }}</span>
+          </div>
+          <div class="col-span-1">
+            <input
+              v-model="newStudent.password"
+              type="password"
+              placeholder="Password"
+              :class="['input input-bordered w-full bg-gray-700', errors.password ? 'border-red-500' : '']"
+            />
+            <span v-if="errors.password" class="text-red-500 text-sm">{{ errors.password }}</span>
+          </div>
+          <!-- Row 5 -->
+          <div class="col-span-1">
+            <select
+              v-model="newStudent.student_type"
+              :class="['select select-bordered w-full bg-gray-700', errors.student_type ? 'border-red-500' : '']"
+            >
+              <option value="" disabled>Select Student Type</option>
+              <option value="Regular">Regular</option>
+              <option value="Irregular">Irregular</option>
+            </select>
+            <span v-if="errors.student_type" class="text-red-500 text-sm">{{ errors.student_type }}</span>
+          </div>
         </div>
-        <div class="col-span-1">
-          <input v-model="newStudent.middle_name" type="text" placeholder="Middle Name" class="input input-bordered w-full bg-gray-700" required />
+        <div class="modal-action mt-4">
+          <button type="button" class="btn btn-secondary" @click="closeAddModal">Cancel</button>
+          <button type="submit" class="btn btn-primary">Add Student</button>
         </div>
-        <!-- Row 2 -->
-        <div class="col-span-1">
-          <input v-model="newStudent.last_name" type="text" placeholder="Last Name" class="input input-bordered w-full bg-gray-700" required />
-        </div>
-        <div class="col-span-1">
-          <input v-model="newStudent.email" type="email" placeholder="Email" class="input input-bordered w-full bg-gray-700" required />
-        </div>
-        <!-- Row 3 -->
-        <div class="col-span-1">
-          <select v-model="newStudent.course" class="select select-bordered w-full bg-gray-700" required>
-            <option value="" disabled>Select Course</option>
-            <option value="BSIT">BSIT</option>
-            <option value="BSHM">BSHM</option>
-            <option value="BEED">BEED</option>
-            <option value="BSED - MAJOR IN ENGLISH">BSED - MAJOR IN ENGLISH</option>
-            <option value="BSED - MAJOR IN SCIENCE">BSED - MAJOR IN SCIENCE</option>
-          </select>
-        </div>
-        <div class="col-span-1">
-          <select v-model="newStudent.year" class="select select-bordered w-full bg-gray-700" required>
-            <option value="" disabled>Select Year</option>
-            <option value="1st Year">1st Year</option>
-            <option value="2nd Year">2nd Year</option>
-            <option value="3rd Year">3rd Year</option>
-            <option value="4th Year">4th Year</option>
-          </select>
-        </div>
-        <!-- Row 4 -->
-        <div class="col-span-1">
-          <input v-model="newStudent.section" type="text" placeholder="Section (e.g., 1A)" class="input input-bordered w-full bg-gray-700" required />
-        </div>
-        <div class="col-span-1">
-          <input v-model="newStudent.password" type="password" placeholder="Password" class="input input-bordered w-full bg-gray-700" required />
-        </div>
-        <!-- Row 5 -->
-        <div class="col-span-2">
-          <select v-model="newStudent.student_type" class="select select-bordered w-full bg-gray-700" required>
-            <option value="" disabled>Select Student Type</option>
-            <option value="Regular">Regular</option>
-            <option value="Irregular">Irregular</option>
-          </select>
-        </div>
-      </div>
-      <div class="modal-action mt-4">
-        <button type="button" class="btn btn-secondary" @click="closeAddModal">Cancel</button>
-        <button type="submit" class="btn btn-primary">Add Student</button>
-      </div>
-    </form>
+      </form>
+    </div>
   </div>
-</div>
 
 
 <div v-if="isEditModalOpen" class="modal modal-open flex justify-center items-center">
@@ -191,8 +248,8 @@
             <option value="BSIT">BSIT</option>
             <option value="BSHM">BSHM</option>
             <option value="BEED">BEED</option>
-            <option value="BSED - English">BSED - English</option>
-            <option value="BSED - Science">BSED - Science</option>
+            <option value="BSED - MAJOR IN ENGLISH">BSED - MAJOR IN ENGLISH</option>
+            <option value="BSED - MAJOR IN SCIENCE">BSED - MAJOR IN SCIENCE</option>
           </select>
           <select 
             v-model="editedStudent.year" 
@@ -285,7 +342,7 @@ import { useStudentStore } from '@/stores/studentStore'
 
 const studentStore = useStudentStore()
 
-const newStudent = ref({ first_name: '', middle_name: '', last_name: '', email: '', password: '', course: '', year: '', section:'', student_type: '' })
+const newStudent = ref({ id_num: '', first_name: '', middle_name: '', last_name: '', email: '', password: '', course: '', year: '', section:'', student_type: '' })
 const isAddModalOpen = ref(false)
 const isBulkAddModalOpen = ref(false)
 const searchQuery = ref('')
@@ -295,6 +352,7 @@ const isConfirmationModalOpen = ref(false);
 const studentIdToDelete = ref(null);
 const isEditModalOpen = ref(false);
 const editedStudent = ref({});
+const errors = ref({});
 
 const currentPage = ref(1)
 const pageSize = ref(10)
@@ -330,17 +388,46 @@ onMounted(async () => {
 })
 
 const handleAddStudent = async () => {
-  try {
-    await studentStore.addStudent(newStudent.value)
-    closeAddModal()
-  } catch (error) {
-    console.error("Error adding Student:", error)
+  // Inline Validation
+  errors.value = {}; // Reset errors
+
+  if (!newStudent.value.id_num) errors.value.id_num = 'ID Number is required.';
+  if (!newStudent.value.first_name) errors.value.first_name = 'First Name is required.';
+  if (!newStudent.value.middle_name) errors.value.middle_name = 'Middle Name is required.';
+  if (!newStudent.value.last_name) errors.value.last_name = 'Last Name is required.';
+  if (!newStudent.value.email) {
+    errors.value.email = 'Email is required.';
+  } else if (!/\S+@\S+\.\S+/.test(newStudent.value.email)) {
+    errors.value.email = 'Invalid email format.';
   }
-}
+  if (!newStudent.value.course) errors.value.course = 'Course is required.';
+  if (!newStudent.value.year) errors.value.year = 'Year is required.';
+  if (!newStudent.value.section) errors.value.section = 'Section is required.';
+  if (!newStudent.value.password) {
+    errors.value.password = 'Password is required.';
+  } else if (newStudent.value.password.length < 6) {
+    errors.value.password = 'Password must be at least 6 characters.';
+  }
+  if (!newStudent.value.student_type) errors.value.student_type = 'Student Type is required.';
+
+  // Check if there are any validation errors
+  if (Object.keys(errors.value).length > 0) {
+    console.error('Validation failed:', errors.value);
+    return;
+  }
+
+  try {
+    await studentStore.addStudent(newStudent.value); // Call API or store method
+    closeAddModal(); // Close the modal after successful addition
+  } catch (error) {
+    console.error('Error adding Student:', error);
+  }
+};
 
 // Bulk selection
 const selectAll = (event) => {
-  selectedStudents.value = event.target.checked ? paginatedStudents.value.map(student => student.id) : []
+  selectedStudents.value = event.target.checked ? paginatedStudents.value.map(student => student.student_id) : []
+  console.log(selectedStudents.value)
 }
 
 const editStudent = (student) => {
@@ -366,18 +453,22 @@ const handleEditStudent = async () => {
 
 // Bulk delete function
 const bulkDelete = async () => {
-  if (selectedStudents.value.length === 0) return
-  const confirmed = confirm(`Are you sure you want to delete ${selectedStudents.value.length} student(s)?`)
-  if (!confirmed) return
+  if (selectedStudents.value.length === 0) return;
+  console.log(selectedStudents.value)
+
+  const confirmed = confirm(`Are you sure you want to delete ${selectedStudents.value.length} student(s)?`);
+  if (!confirmed) return;
+
   try {
-    await Promise.all(selectedStudents.value.map(id => studentStore.deleteStudent(id)))
-    selectedStudents.value = []
-    await studentStore.fetchStudents()
-    alert("Selected students deleted successfully.")
+    await Promise.all(selectedStudents.value.map(id => studentStore.deleteStudent(id)));
+    selectedStudents.value = []; // Clear selection after deletion
+    await studentStore.fetchStudents();
+    alert("Selected students deleted successfully.");
   } catch (error) {
-    console.error("Error deleting selected students:", error)
+    console.error("Error deleting selected students:", error);
   }
-}
+};
+
 
 const openConfirmationModal = (id) => {
   studentIdToDelete.value = id;
@@ -402,18 +493,22 @@ const deleteStudent = async (id) => {
 
 const students = computed(() => studentStore.students)
 
+
 const filteredStudents = computed(() => {
   if (!searchQuery.value) return students.value;
+
   const query = searchQuery.value.toLowerCase();
   
   return students.value.filter(student => 
     `${student.first_name ?? ''} ${student.middle_name ?? ''} ${student.last_name ?? ''}`.toLowerCase().includes(query) ||
+    String(student.id_num ?? '').toLowerCase().includes(query) || // Convert id_num to string
     (student.email ?? '').toLowerCase().includes(query) ||
     (student.course ?? '').toLowerCase().includes(query) ||
     (student.year_and_section ?? '').toLowerCase().includes(query) ||
     (student.student_type ?? '').toLowerCase().includes(query)
   );
 });
+
 
 const paginatedStudents = computed(() => {
   const start = (currentPage.value - 1) * pageSize.value

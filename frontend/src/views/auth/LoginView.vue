@@ -1,56 +1,72 @@
 <template>
-  <div class="min-h-screen bg-cover bg-gray-900 bg-center flex items-center justify-center">
-    <div class="bg-gray-800 p-8 rounded-lg shadow-lg w-full max-w-sm">
-      <h2 class="text-2xl font-bold mb-6 text-center text-white">Welcome!</h2>
-      <form @submit.prevent="handleLogin">
-        <!-- Email Input -->
-        <div class="mb-4 relative">
-          <input
-            type="email"
-            v-model="email"
-            class="input w-full text-white px-10 bg-gray-700 border focus:outline-none focus:ring focus:ring-blue-400"
-            placeholder="Email"
-            required
-          />
-          <!-- Email Icon -->
-          <i class="fas fa-envelope absolute left-3 top-3 text-gray-400"></i>
+  <div class="min-h-screen bg-gradient-to-br from-blue-900 via-gray-900 to-black flex items-center justify-center">
+    <!-- Decorative Header -->
+    <div class="absolute top-10 text-center">
+      <h1 class="text-5xl font-extrabold text-white">CPC Online Clearance</h1>
+      <p class="text-lg text-gray-300 mt-2">Secure your clearance with ease</p>
+    </div>
+
+    <!-- Login Card -->
+    <div class="card w-full max-w-md bg-gray-700 shadow-2xl p-6">
+      <h2 class="card-title text-center text-3xl font-bold mb-6">Welcome Back!</h2>
+      <form @submit.prevent="handleLogin" class="space-y-4">
+        <!-- Student ID / Email Input -->
+        <div class="form-control">
+          <label class="label">
+            <span class="label-text text-white">Student ID or Email</span>
+          </label>
+          <div class="relative">
+            <input
+              type="text"
+              v-model="loginInput"
+              placeholder="Enter your ID or Email"
+              class="input input-bordered w-full pr-10"
+              required
+            />
+            <i class="fas fa-user absolute top-1/2 right-3 transform -translate-y-1/2 text-gray-400"></i>
+          </div>
         </div>
 
         <!-- Password Input -->
-        <div class="mb-6 relative">
-          <input
-            :type="passwordVisible ? 'text' : 'password'"
-            v-model="password"
-            class="input w-full text-white px-10 bg-gray-700 border focus:outline-none focus:ring focus:ring-blue-400"
-            placeholder="Password"
-            required
-          />
-          <!-- Password Icon -->
-          <i class="fas fa-lock absolute left-3 top-3 text-gray-400"></i>
-
-          <!-- Show Password Toggle Button -->
-          <button
-            type="button"
-            @click="togglePassword"
-            class="absolute right-3 top-3 text-gray-400 focus:outline-none"
-          >
-            <i :class="passwordVisible ? 'fas fa-eye' : 'fas fa-eye-slash'"></i>
-          </button>
+        <div class="form-control">
+          <label class="label">
+            <span class="label-text text-white">Password</span>
+          </label>
+          <div class="relative">
+            <input
+              :type="passwordVisible ? 'text' : 'password'"
+              v-model="password"
+              placeholder="Enter your password"
+              class="input input-bordered w-full pr-10"
+              required
+            />
+            <button
+              type="button"
+              @click="togglePassword"
+              class="absolute top-1/2 right-3 transform -translate-y-1/2 text-gray-400"
+            >
+              <i :class="passwordVisible ? 'fas fa-eye' : 'fas fa-eye-slash'"></i>
+            </button>
+          </div>
         </div>
 
-        <!-- Login Button with Loading State -->
-        <button
-          type="submit"
-          :disabled="loading"
-          class="btn btn-primary w-full flex justify-center items-center"
-        >
-          <span v-if="loading" class="loader"></span>
-          <span v-else>Login</span>
-        </button>
+        <!-- Login Button -->
+        <div class="form-control mt-4">
+          <button
+            type="submit"
+            class="btn btn-primary w-full"
+            :class="{ loading: loading }"
+            :disabled="loading"
+          >
+            <span v-if="!loading">Login</span>
+          </button>
+        </div>
       </form>
-      <div class="text-center mt-4">
-        <span class="text-blue-500">Forgot Password? <a href="#" class="cursor-pointer hover:underline">Click Here!</a></span>
-      </div>
+    </div>
+
+    <!-- Decorative Footer -->
+    <div class="absolute bottom-5 text-center">
+      <p class="text-gray-400 text-sm">&copy; 2024 CPC Online Clearance. All rights reserved.</p>
     </div>
   </div>
 </template>
@@ -60,10 +76,10 @@ import { ref } from 'vue';
 import { useAuthStore } from '@/stores/authStore'; // Adjust the path as needed
 import { useRouter } from 'vue-router';
 
-const email = ref('');
+const loginInput = ref(''); // Dynamic input for Student ID or Email
 const password = ref('');
 const passwordVisible = ref(false);
-const loading = ref(false); // Loading state
+const loading = ref(false);
 const router = useRouter();
 const authStore = useAuthStore();
 
@@ -72,12 +88,18 @@ const togglePassword = () => {
   passwordVisible.value = !passwordVisible.value;
 };
 
-// Handle login with a delay for redirection
+// Handle login with support for Student ID or Email
 const handleLogin = async () => {
   loading.value = true; // Set loading to true when login starts
   try {
-    await authStore.login({ email: email.value, password: password.value });
-    console.log('Login successful, redirecting...')
+    // Send loginInput as a single field regardless of email or student ID
+    const loginPayload = {
+      loginInput: loginInput.value, // Pass email or student ID as loginInput
+      password: password.value,
+    };
+
+    // Pass the payload to authStore
+    await authStore.login(loginPayload);
 
     // Simulate a delay of 2 seconds before redirecting
     setTimeout(() => {
@@ -86,10 +108,11 @@ const handleLogin = async () => {
     }, 2000); // 2000ms = 2 seconds
   } catch (error) {
     console.error('Login failed:', error.message);
-    alert('Invalid credentials');
+    alert('Invalid Student ID/Email or Password');
     loading.value = false; // Reset loading state on failure
   }
 };
+
 </script>
 
 <style scoped>
